@@ -388,32 +388,32 @@ function samplers(::MIMIX, epsilon::Float64, steps::Int, hmc_verbose::Bool)
             end
     )
 
-    Gibbs_ξ = Sampler([:ξ],
-        (Λ, a, ν, L, K) ->
-            begin
-                M = 2abs(Λ)
-                boundbelow!(M)
-                T = zeros(L, K)
-                for k in 1:K
-                    for l in 1:L
-                        T[l, k] = rand(GeneralizedInverseGaussian(2ν, M[l, k], a[l] - 1))
-                    end
-                end
-                ξ = T ./ sum(T, 2)
-                ξ
-            end
-    )
-
-    Gibbs_τ = Sampler([:τ],
-        (τ, ξ, Λ, a, ν, L, K) ->
-            begin
-                S = 2vec(sum(abs(Λ) ./ ξ, 2))
-                for l in 1:L
-                    τ[l] = rand(GeneralizedInverseGaussian(2ν, S[l], K * a[l] - K))
-                end
-                τ
-            end
-    )
+#    Gibbs_ξ = Sampler([:ξ],
+#        (Λ, a, ν, L, K) ->
+#            begin
+#                M = 2abs(Λ)
+#                boundbelow!(M)
+#                T = zeros(L, K)
+#                for k in 1:K
+#                    for l in 1:L
+#                        T[l, k] = rand(GeneralizedInverseGaussian(2ν, M[l, k], a[l] - 1))
+#                    end
+#                end
+#                ξ = T ./ sum(T, 2)
+#                ξ
+#            end
+#    )
+#
+#    Gibbs_τ = Sampler([:τ],
+#        (τ, ξ, Λ, a, ν, L, K) ->
+#            begin
+#                S = 2vec(sum(abs(Λ) ./ ξ, 2))
+#                for l in 1:L
+#                    τ[l] = rand(GeneralizedInverseGaussian(2ν, S[l], K * a[l] - K))
+#                end
+#                τ
+#            end
+#    )
 
    Gibbs_ξ = Sampler([:ξ],
        (ξ, Λ, a, ν, L, K) ->
