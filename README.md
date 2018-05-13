@@ -1,5 +1,7 @@
 # MIMIX
 
+**Requires Julia 0.4**
+
 MIMIX (MIcrobiome MIXed model) is hierarchical Bayesian model for the analysis of next-generation sequencing OTU abundance data from designed experiments. 
 It achieves four scientific objectives:
 
