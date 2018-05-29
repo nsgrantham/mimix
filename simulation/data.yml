@@ -1,0 +1,26 @@
+
+T: 20
+nm: 50
+m_active: 0.5
+
+# response variable
+y:
+  alpha:    0.0
+  beta:   [10.0]
+  sigma2:  16.0
+  tau2:     3.0
+  phi:      3.0
+
+# spatially-missing covariate
+z:
+  beta:   [0.0]
+  sigma2:  3.0
+  tau2:    0.1
+  phi:     3.0
+
+# missingness factor
+w:
+  alpha:   0.0
+  beta:   [0.0]
+  sigma2:  0.9
+  phi:     0.1

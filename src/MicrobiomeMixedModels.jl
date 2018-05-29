@@ -23,11 +23,23 @@ export
     rand,
     MIMIX,
     MIMIXNoFactors,
-    fit
+    fit,
+    get_model,
+    get_inits,
+    parse_config,
+    load_config
 
-#abstract type MicrobiomeModel end
-#struct MIMIX <: MicrobiomeModel end
-#struct MIMIXNoFactors <: MicrobiomeModel end
+abstract type MicrobiomeModel end
+
+struct MIMIX <: MicrobiomeModel
+    factors::Int
+    function MIMIX(factors::Int)
+        @assert factors > zero(factors)
+        new(factors)
+    end
+end
+
+struct MIMIXNoFactors <: MicrobiomeModel end
 
 include("generalized-inverse-gaussian.jl")  # distribution used in MIMIX
 include(joinpath("models", "mimix.jl"))

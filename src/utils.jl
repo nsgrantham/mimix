@@ -22,21 +22,48 @@ function proportionalize(Y::Matrix, tol=1e-10)
 end
 
 function clr(θ)
-    x = exp(θ)
+    x = exp.(θ)
     S = sum(x, 2)
     x ./ S
 end
 
 function iclr(ϕ)
-    x = log(ϕ)
+    x = log.(ϕ)
     x .- mean(x, 2)
 end
 
 function logfgrad(θ, θ_mean, θ_var, y, m)
-    expθ = exp(θ)
-    S = sum(expθ)
+    e = exp.(θ)
+    S = sum(e)
     resid = θ - θ_mean
     logf = dot(y, θ) - m * log(S) - 0.5sum((resid.^2) ./ θ_var)
-    grad = y - m .* expθ ./ S - resid ./ θ_var
+    grad = y - m .* e ./ S - resid ./ θ_var
     logf, grad
+end
+
+function parse_config(conf)
+    greek = Dict(
+        "beta" => "β",
+        "gamma" => "γ",
+        "mu" => "μ",
+        "phi" => "ϕ",
+        "pi" => "π",
+        "omega" => "ω",
+        "theta" => "θ"
+    )
+    parsed_conf = Dict{Symbol, Any}()
+    for key in keys(conf)
+        param = key
+        for (name, letter) in greek
+            param = replace(param, name, letter)
+        end
+        parsed_conf[Symbol(param)] = conf[key]
+    end
+    return parsed_conf
+end
+
+function load_config(filename)
+    @assert isfile(filename)
+    conf = YAML.load(open(filename, "r"))
+    return parse_config(conf)
 end

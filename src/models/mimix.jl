@@ -1,45 +1,45 @@
-immutable MIMIX
-    factors::Int
-    function MIMIX(factors::Int)
-        @assert factors > zero(factors)
-        new(factors)
-    end
-end
-
-function fit(mm::MIMIX, Y, X, Z;
-             iters::Int=1000, monitor::Vector{Symbol}=Symbol[],
-             epsilon::Float64=0.1, steps::Int=16, hmc_verbose::Bool=false,
-             kwargs...)
-    d = datadict(mm, Y, X, Z)
-    i = inits(mm, d)
-    m = model(mm, monitor)
-    s = samplers(mm, epsilon, steps, hmc_verbose)
-    setsamplers!(m, s)
-    sim = mcmc(m, d, i, iters; kwargs...)
-    return sim
-end
-
-function datadict(mm::MIMIX, Y, X, Z)
-    d = Dict{Symbol, Any}(
-        :Y => Y,
-        :X => X,
-        :Z => Z
-    )
-    d[:N], d[:K] = size(d[:Y])
-    d[:m] = vec(sum(d[:Y], 2))
-    d[:p] = size(d[:X], 2)
-    d[:num_blocking_factor] = size(d[:Z], 2)
-    d[:blocking_factor] = Dict{Int, Int}()
-    for level in unique(d[:Z])
-        bf = find(any(d[:Z] .== level, 1))
-        @assert length(bf) == 1
-        d[:blocking_factor][level] = bf[1]
-    end
-    d[:q] = maximum(d[:Z])
-    d[:arr_a] = collect(0.01:0.01:0.5)
-    d[:L] = mm.factors
-    return d
-end
+#immutable MIMIX
+#    factors::Int
+#    function MIMIX(factors::Int)
+#        @assert factors > zero(factors)
+#        new(factors)
+#    end
+#end
+#
+#function fit(mm::MIMIX, Y, X, Z;
+#             iters::Int=1000, monitor::Vector{Symbol}=Symbol[],
+#             epsilon::Float64=0.1, steps::Int=16, hmc_verbose::Bool=false,
+#             kwargs...)
+#    d = datadict(mm, Y, X, Z)
+#    i = inits(mm, d)
+#    m = model(mm, monitor)
+#    s = samplers(mm, epsilon, steps, hmc_verbose)
+#    setsamplers!(m, s)
+#    sim = mcmc(m, d, i, iters; kwargs...)
+#    return sim
+#end
+#
+#function datadict(mm::MIMIX, Y, X, Z)
+#    d = Dict{Symbol, Any}(
+#        :Y => Y,
+#        :X => X,
+#        :Z => Z
+#    )
+#    d[:N], d[:K] = size(d[:Y])
+#    d[:m] = vec(sum(d[:Y], 2))
+#    d[:p] = size(d[:X], 2)
+#    d[:num_blocking_factor] = size(d[:Z], 2)
+#    d[:blocking_factor] = Dict{Int, Int}()
+#    for level in unique(d[:Z])
+#        bf = find(any(d[:Z] .== level, 1))
+#        @assert length(bf) == 1
+#        d[:blocking_factor][level] = bf[1]
+#    end
+#    d[:q] = maximum(d[:Z])
+#    d[:arr_a] = collect(0.01:0.01:0.5)
+#    d[:L] = mm.factors
+#    return d
+#end
 
 function inits(::MIMIX, d::Dict{Symbol, Any})
     θ_init = iclr(proportionalize(d[:Y]))

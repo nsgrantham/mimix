@@ -1,0 +1,5 @@
+# Hamiltonian Monte Carlo settings
+hmc_epsilon: 0.05
+hmc_steps: 32
+hmc_verbose: false
+
