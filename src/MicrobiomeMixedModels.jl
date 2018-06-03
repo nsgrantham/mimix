@@ -5,9 +5,9 @@ using Distributions
 using YAML
 #using RCall
 
-using StatsBase: Histogram
+using StatsBase: Histogram, Weights, sample
 
-import Base: convert
+import Base: convert, maximum
 import Distributions: params, partype, mean, var, mode, pdf, logpdf, rand
 import StatsBase: fit
 

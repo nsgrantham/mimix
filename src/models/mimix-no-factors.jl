@@ -1,40 +1,5 @@
 
-#immutable MIMIXNoFactors end
-#
-#function fit(mm::MIMIXNoFactors, Y, X, Z;
-#            iters::Int=1000, monitor::Vector{Symbol}=Symbol[],
-#            epsilon::Float64=0.1, steps::Int=16, hmc_verbose::Bool=false,
-#            kwargs...)
-#    d = datadict(mm, Y, X, Z)
-#    i = inits(mm, d)
-#    m = model(mm, monitor)
-#    s = samplers(mm, epsilon, steps, hmc_verbose)
-#    setsamplers!(m, s)
-#    sim = mcmc(m, d, i, iters; kwargs...)
-#    return sim
-#end
-#
-#function datadict(mm::MIMIXNoFactors, Y, X, Z)
-#    d = Dict{Symbol, Any}(
-#        :Y => Y,
-#        :X => X,
-#        :Z => Z
-#    )
-#    d[:N], d[:K] = size(d[:Y])
-#    d[:m] = vec(sum(d[:Y], 2))
-#    d[:p] = size(d[:X], 2)
-#    d[:num_blocking_factor] = size(d[:Z], 2)
-#    d[:blocking_factor] = Dict{Int, Int}()
-#    for level in unique(d[:Z])
-#        bf = find(any(d[:Z] .== level, 1))
-#        @assert length(bf) == 1
-#        d[:blocking_factor][level] = bf[1]
-#    end
-#    d[:q] = maximum(d[:Z])
-#    return d
-#end
-
-function get_inits(::Type{MIMIXNoFactors}, params::Dict{Symbol, Any}, data::Dict{Symbol, Any})
+function get_inits(::MIMIXNoFactors, params::Dict{Symbol, Any}, data::Dict{Symbol, Any})
     θ_init = iclr(proportionalize(data[:Y]))
     ω_init = params[:ω] == "ones" ? ones(data[:K], data[:p]) : zeros(data[:K], data[:p])
     π_init = params[:π] == "even" ? [0.5 for _ in 1:data[:p]] : params[:π]
@@ -59,7 +24,7 @@ function get_inits(::Type{MIMIXNoFactors}, params::Dict{Symbol, Any}, data::Dict
     return inits
 end
 
-function get_model(::Type{MIMIXNoFactors}, monitor::Dict{Symbol, Any}, hyper::Dict{Symbol, Any})
+function get_model(::MIMIXNoFactors, monitor::Dict{Symbol, Any}, hyper::Dict{Symbol, Any})
     
     model = Model(
         # High-dimensional counts
@@ -86,12 +51,12 @@ function get_model(::Type{MIMIXNoFactors}, monitor::Dict{Symbol, Any}, hyper::Di
 
         θ_mean = Logical(2,
             (μ, Xβ, sumZγ) -> Xβ + sumZγ .+ transpose(μ),
-            monitor[:θ_mean]
+            false
         ),
 
         θ_var = Stochastic(1,
             () -> InverseGamma(1, 1),
-            monitor[:θ_var]
+            false
         ),
 
         # Population mean
@@ -195,7 +160,7 @@ function get_model(::Type{MIMIXNoFactors}, monitor::Dict{Symbol, Any}, hyper::Di
                     end
                 end
                 if hyper[:hmc_verbose]
-                  println("HMC accept rate: $(round(100acc/N, 1))%, ")
+                    println("HMC accept rate: $(round(100acc/N, 1))%, ")
                 end
                 θ
             end

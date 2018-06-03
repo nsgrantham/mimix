@@ -1,4 +1,5 @@
 using ArgParse
+using CSV
 using DataFrames
 using Mamba
 using MicrobiomeMixedModels
@@ -56,9 +57,10 @@ function ar1_covar(d::Int, cor::Float64, var::Float64)
 end
 
 function generate_data(;
-    N::Int=40, K::Int=100, q::Int=5, m_min::Int=2500, m_max::Int=5000,
+    N::Int=40, K::Int=100, L::Int=-1, q::Int=5, m_min::Int=2500, m_max::Int=5000,
     μ::Vector=collect(linspace(1, -1, K)), block_cor::Float64=0.9, error_cor::Float64=0.9,
-    dense::Float64=0.1, block_var::Float64=1.0, error_var::Float64=1.0)
+    dense::Float64=0.1, block_var::Float64=1.0, error_var::Float64=1.0,
+    a_support::Vector{Float64}=collect(0.01:0.01:0.5))
 
     @assert length(μ) == K
     @assert iseven(N)
@@ -112,6 +114,8 @@ function generate_data(;
         :m => m,
         :q => q
     )
+    data[:a_support] = a_support
+    data[:L] = L
     data[:p] = size(X, 2)
     data[:num_blocking_factors] = size(Z, 2)
     data[:blocking_factor] = Dict{Int, Int}()
@@ -133,9 +137,10 @@ args = parse_commandline()
 
 factors = args["factors"]
 if args["no-factors"]
-    mimix = eval(Symbol("MIMIXNoFactors"))
-elseif parse(Int, factors) > 0
-    mimix = eval(Symbol("MIMIX($factors)"))
+    mimix = MIMIXNoFactors()
+    factors = -1
+elseif factors > 0
+    mimix = MIMIX(factors)
 else
     ValueError("--factors requires positive integer or --no-factors flag must be given")
 end
@@ -147,7 +152,7 @@ inits_conf = load_config(abspath(args["inits"]))
 
 model = get_model(mimix, monitor_conf, hyper_conf)
 #data, truth = generate_data(; data_conf...)
-data, truth = generate_data()
+data, truth = generate_data(; L = factors)
 inits = get_inits(mimix, inits_conf, data)
 inits = [inits for _ in 1:args["chains"]]
 
@@ -184,4 +189,5 @@ for (i, q) in enumerate(post_quantiles.colnames)
 end
 
 print(results)
-writetable(abspath(args["output"]), results)
+#writetable(abspath(args["output"]), results)
+CSV.write(abspath(args["output"]), results, delim='\t')

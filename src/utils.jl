@@ -44,18 +44,26 @@ end
 function parse_config(conf)
     greek = Dict(
         "beta" => "β",
+        "epsilon" => "ϵ",
         "gamma" => "γ",
+        "lambda" => "λ",
         "mu" => "μ",
+        "nu" => "ν",
+        "omega" => "ω",
         "phi" => "ϕ",
         "pi" => "π",
-        "omega" => "ω",
-        "theta" => "θ"
+        "psi" => "ψ",  # must come after epsilon
+        "tau" => "τ",
+        "theta" => "θ",
+        "xi" => "ξ"
     )
     parsed_conf = Dict{Symbol, Any}()
     for key in keys(conf)
         param = key
         for (name, letter) in greek
-            param = replace(param, name, letter)
+            if startswith(param, name)
+                param = replace(param, name, letter)
+            end
         end
         parsed_conf[Symbol(param)] = conf[key]
     end

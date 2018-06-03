@@ -6,3 +6,7 @@ beta: zeros
 beta_var: ones
 gamma: zeros
 gamma_var: ones
+b: zeros
+b_var: ones
+g: zeros
+g_var: ones
