@@ -112,10 +112,9 @@ function generate_data(;
         :N => N,
         :K => K,
         :m => m,
-        :q => q
+        :q => q,
+        :L => L
     )
-    data[:a_support] = a_support
-    data[:L] = L
     data[:p] = size(X, 2)
     data[:num_blocking_factors] = size(Z, 2)
     data[:blocking_factor] = Dict{Int, Int}()
@@ -147,12 +146,12 @@ end
 
 monitor_conf = load_config(abspath(args["monitor"]))
 hyper_conf = load_config(abspath(args["hyper"]))
-#data_conf = load_config(abspath(args["data"]))
+data_conf = load_config(abspath(args["data"]))
 inits_conf = load_config(abspath(args["inits"]))
 
 model = get_model(mimix, monitor_conf, hyper_conf)
-#data, truth = generate_data(; data_conf...)
-data, truth = generate_data(; L = factors)
+data, truth = generate_data(; L = factors, data_conf...)
+#data, truth = generate_data(; L = factors)
 inits = get_inits(mimix, inits_conf, data)
 inits = [inits for _ in 1:args["chains"]]
 

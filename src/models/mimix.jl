@@ -33,28 +33,6 @@ function get_inits(::MIMIX, params::Dict{Symbol, Any}, data::Dict{Symbol, Any})
         :a_index => ones(data[:L])
     )
 
-    #i = [
-    #    Dict{Symbol, Any}(
-    #        :Y => d[:Y],
-    #        :θ => θ_init,
-    #        :θ_var => vec(var(θ_init, 1)),
-    #        :μ => vec(mean(θ_init, 1)),
-    #        :μ_var => 1.0,
-    #        :Λ => eye(d[:L], d[:K]),
-    #        :F => zeros(d[:N], d[:L]),
-    #        :ψ => ones(d[:L], d[:K]),
-    #        :ξ => ones(d[:L], d[:K]),
-    #        :τ => ones(d[:L]),
-    #        :ν => 0.5,
-    #        :b_full => zeros(d[:L], d[:p]),
-    #        :g => zeros(d[:L], d[:q]),
-    #        :ω => ones(d[:L], d[:p]),
-    #        :π => [0.5 for j in 1:d[:p]],
-    #        :b_var => ones(d[:p]),
-    #        :g_var => ones(d[:num_blocking_factor]),
-    #        :idx_a => ones(d[:L])
-    #    )
-    #]
     return inits
 end
 
@@ -182,6 +160,11 @@ function get_model(::MIMIX, monitor::Dict{Symbol, Any}, hyper::Dict{Symbol, Any}
             (a_support, L) -> UnivariateDistribution[
                 Categorical(length(a_support)) for l in 1:L
             ],
+            false
+        ),
+
+        a_support = Logical(1,
+            () -> collect(hyper[:a_start]:hyper[:a_by]:hyper[:a_end]),
             false
         ),
 
