@@ -7,9 +7,9 @@ theta_var: false
 mu: false
 mu_var: false
 gamma: false
-gamma_var: true
-beta: true
+gamma_var: false
+beta: false
 beta_var: false
 beta_full: true
-omega: true
+omega: false
 pi: false

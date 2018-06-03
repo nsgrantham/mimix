@@ -159,13 +159,12 @@ results = DataFrame(MambaName = sim.names)
 nodes = Symbol[]
 values = Float64[]
 for name in results[:MambaName]
-    println(name)
     for (node, value) in truth
-        println(node)
         if startswith(name, String(node))
             push!(nodes, node)
             if '[' in name
-                index = strip(name, [collect(String(node))..., '[', ']'])
+                index = name[search(name, '['):end]
+                index = strip(index, ['[', ']'])
                 index = parse.(split(index, ','))
                 push!(values, value[index...])
             else
