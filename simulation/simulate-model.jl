@@ -188,5 +188,4 @@ for (i, q) in enumerate(post_quantiles.colnames)
 end
 
 print(results)
-#writetable(abspath(args["output"]), results)
 CSV.write(abspath(args["output"]), results, delim='\t')

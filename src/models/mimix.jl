@@ -280,7 +280,7 @@ function get_model(::MIMIX, monitor::Dict{Symbol, Any}, hyper::Dict{Symbol, Any}
                 B = (transpose(F) * (θ .- transpose(μ))) ./ transpose(θ_var)
                 Sigma = zeros(L, L)
                 for k in 1:K
-                    Sigma[:, :] = inv(cholfact(spdiagm(1 ./ λ_var[:, k]) + FtF ./ θ_var[k]))
+                    Sigma[:, :] = inv(cholfact(Hermitian(spdiagm(1 ./ λ_var[:, k]) + FtF ./ θ_var[k])))
                     Λ[:, k] = rand(MvNormal(Sigma * B[:, k], Hermitian(Sigma)))
                 end
                 Λ
