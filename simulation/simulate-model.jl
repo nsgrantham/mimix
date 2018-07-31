@@ -26,6 +26,10 @@ function parse_commandline()
             arg_type = Int
             default = 1
             help = "Number of MCMC chains to run."
+        "--seed"
+            arg_type = Int
+            default = 1
+            help = "Reseed the random number generator."
         "--data"
             help = "YAML defining the settings for artificial data generation."
         "--monitor"
@@ -60,11 +64,13 @@ function generate_data(;
     N::Int=40, K::Int=100, L::Int=-1, q::Int=5, m_min::Int=2500, m_max::Int=5000,
     μ::Vector=collect(linspace(1, -1, K)), block_cor::Float64=0.9, error_cor::Float64=0.9,
     dense::Float64=0.1, block_var::Float64=1.0, error_var::Float64=1.0,
-    a_support::Vector{Float64}=collect(0.01:0.01:0.5))
+    a_support::Vector{Float64}=collect(0.01:0.01:0.5), seed::Int=1)
 
     @assert length(μ) == K
     @assert iseven(N)
     @assert N % q == 0
+
+    srand(seed)
 
     # Fixed effects due to single treatment
     X = transpose([ones(div(N, 2))... zeros(div(N, 2))...])
@@ -133,6 +139,7 @@ args = parse_commandline()
 @assert 0 <= args["burnin"] "Burn-in must be non-negative"
 @assert 0 < args["thin"]    "Thin must be positive"
 @assert 0 < args["chains"]  "Chains must be positive"
+@assert 0 <= args["seed"]   "Seed must be non-negative"
 
 factors = args["factors"]
 if args["no-factors"]
@@ -150,11 +157,14 @@ data_conf = load_config(abspath(args["data"]))
 inits_conf = load_config(abspath(args["inits"]))
 
 model = get_model(mimix, monitor_conf, hyper_conf)
-data, truth = generate_data(; L = factors, data_conf...)
-#data, truth = generate_data(; L = factors)
+
+seed = args["seed"]
+data, truth = generate_data(; L = factors, seed = seed, data_conf...)
+
 inits = get_inits(mimix, inits_conf, data)
 inits = [inits for _ in 1:args["chains"]]
 
+println("Beginning MCMC simulation")
 mcmc_kwargs = Dict(Symbol(key) => args[key] for key in ["burnin", "thin", "chains"])
 sim = mcmc(model, data, inits, args["iters"]; mcmc_kwargs...)
 
@@ -187,5 +197,6 @@ for (i, q) in enumerate(post_quantiles.colnames)
     results[Symbol(q)] = post_quantiles.value[:, i]
 end
 
-print(results)
-CSV.write(abspath(args["output"]), results, delim='\t')
+output = abspath(args["output"])
+println("Writing results to $output")
+CSV.write(output, results, delim='\t')
