@@ -70,8 +70,10 @@ function parse_config(conf)
     return parsed_conf
 end
 
-function load_config(filename)
+function load_config(filename::AbstractString)
     @assert isfile(filename)
     conf = YAML.load(open(filename, "r"))
     return parse_config(conf)
 end
+
+load_config(filenames::Vector{T}) where T <: AbstractString = merge!([load_config(f) for f in filenames]...)

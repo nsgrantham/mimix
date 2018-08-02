@@ -31,6 +31,7 @@ function parse_commandline()
             default = 1
             help = "Reseed the random number generator."
         "--data"
+            nargs = '*'
             help = "YAML defining the settings for artificial data generation."
         "--monitor"
             help = "YAML defining the nodes to monitor through MCMC."
@@ -84,7 +85,7 @@ function generate_data(;
             β[i] = v
         end
     end
-
+    
     # Random effects due to block
     Z = reshape(repeat(collect(1:q), outer=[div(N, q)]), N, 1)
     γ = rand(MvNormal(ar1_covar(K, block_cor, block_var)), q)
@@ -135,6 +136,9 @@ end
 
 args = parse_commandline()
 
+output = abspath(args["output"])
+@assert isdir(dirname(output))
+
 @assert 0 < args["iters"]   "Iters must be positive"
 @assert 0 <= args["burnin"] "Burn-in must be non-negative"
 @assert 0 < args["thin"]    "Thin must be positive"
@@ -142,26 +146,26 @@ args = parse_commandline()
 @assert 0 <= args["seed"]   "Seed must be non-negative"
 
 factors = args["factors"]
-if args["no-factors"]
-    mimix = MIMIXNoFactors()
-    factors = -1
+if args["no-factors"] | factors == 0
+    model_type = MIMIXNoFactors()
+    factors = 0
 elseif factors > 0
-    mimix = MIMIX(factors)
+    model_type = MIMIX(factors)
 else
     ValueError("--factors requires positive integer or --no-factors flag must be given")
 end
 
 monitor_conf = load_config(abspath(args["monitor"]))
 hyper_conf = load_config(abspath(args["hyper"]))
-data_conf = load_config(abspath(args["data"]))
+data_conf = load_config(AbstractString[abspath(data_path) for data_path in args["data"]])
 inits_conf = load_config(abspath(args["inits"]))
 
-model = get_model(mimix, monitor_conf, hyper_conf)
+model = get_model(model_type, monitor_conf, hyper_conf)
 
 seed = args["seed"]
 data, truth = generate_data(; L = factors, seed = seed, data_conf...)
 
-inits = get_inits(mimix, inits_conf, data)
+inits = get_inits(model_type, inits_conf, data)
 inits = [inits for _ in 1:args["chains"]]
 
 println("Beginning MCMC simulation")
@@ -197,6 +201,5 @@ for (i, q) in enumerate(post_quantiles.colnames)
     results[Symbol(q)] = post_quantiles.value[:, i]
 end
 
-output = abspath(args["output"])
 println("Writing results to $output")
 CSV.write(output, results, delim='\t')

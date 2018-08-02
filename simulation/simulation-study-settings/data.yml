@@ -1,0 +1,8 @@
+
+N: 40
+K: 100
+q: 5
+m_min: 2500
+m_max: 5000
+block_cor: 0.9
+error_cor: 0.9
