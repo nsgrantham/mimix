@@ -32,7 +32,7 @@ mimix () {
     for setting in ${@:3}; do
         settings+=("$settings_dir/$setting")
     done
-    results_dir=$OUTPUT_DIR/$2/mimix-$1-factors
+    results_dir=$OUTPUT_DIR/mimix-$1-factors/$2
     mkdir -p $results_dir
     parallel --no-notice $(which julia) simulation/simulate-model.jl \
         --inits   simulation/inits.yml \

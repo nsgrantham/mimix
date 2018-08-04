@@ -18,7 +18,7 @@
 #* [Generalized Inverse Gaussian distribution on Wikipedia](https://en.wikipedia.org/wiki/Generalized_inverse_Gaussian_distribution)
 #
 #"""
-immutable GeneralizedInverseGaussian{T<:Real} <: ContinuousUnivariateDistribution
+struct GeneralizedInverseGaussian{T<:Real} <: ContinuousUnivariateDistribution
     a::T
     b::T
     p::T

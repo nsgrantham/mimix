@@ -62,7 +62,7 @@ function get_model(::MIMIX, monitor::Dict{Symbol, Any}, hyper::Dict{Symbol, Any}
         ),
 
         θ_mean = Logical(2,
-            (μ, ΛF) -> ΛF .+ μ',
+            (μ, ΛF) -> ΛF .+ transpose(μ),
             false
         ),
 
@@ -86,7 +86,7 @@ function get_model(::MIMIX, monitor::Dict{Symbol, Any}, hyper::Dict{Symbol, Any}
         # Full-dimensional fixed effect estimates (monitor these for OTU-level inference!)
 
         β = Logical(2,
-            (Λ, b) -> Λ' * b,
+            (Λ, b) -> transpose(Λ) * b,
             monitor[:β]
         ),
 
