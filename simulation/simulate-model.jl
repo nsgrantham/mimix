@@ -137,7 +137,7 @@ end
 args = parse_commandline()
 
 output = abspath(args["output"])
-@assert isdir(dirname(output))
+mkdir(output)
 
 @assert 0 < args["iters"]   "Iters must be positive"
 @assert 0 <= args["burnin"] "Burn-in must be non-negative"
@@ -172,11 +172,20 @@ println("Beginning MCMC simulation")
 mcmc_kwargs = Dict(Symbol(key) => args[key] for key in ["burnin", "thin", "chains"])
 sim = mcmc(model, data, inits, args["iters"]; mcmc_kwargs...)
 
-# summarize simulation results in DataFrame
-results = DataFrame(MambaName = sim.names)
+# summarize global test results
+sim_omega = sim[:, [startswith(name, 'ω') for name in sim.names], :].value
+num_included_each_iter = sum(sim_omega, 2)
+post_prob_inclusion = mean(num_included_each_iter .> 0.0)
+global_results = DataFrame(reject_global_null = post_prob_inclusion > 0.9)
+CSV.write(joinpath(output, "global-test.tsv"), global_results, delim='\t')
+
+# summarize local parameter estimates
+sim_beta_names = sim.names[[startswith(name, 'β') for name in sim.names]]
+sim_beta = sim[:, sim_beta_names, :]
+results = DataFrame(mamba_name = sim_beta_names)
 nodes = Symbol[]
 values = Float64[]
-for name in results[:MambaName]
+for name in results[:mamba_name]
     for (node, value) in truth
         if startswith(name, String(node))
             push!(nodes, node)
@@ -191,15 +200,15 @@ for name in results[:MambaName]
         end
     end
 end
-results[:MambaNode] = nodes
-results[:Value] = values
+results[:mamba_node] = nodes
+results[:value] = values
 
-post_summary = summarystats(sim)
-post_quantiles = quantile(sim)
-results[:Mean] = post_summary.value[:, 1]
+post_summary = summarystats(sim_beta)
+post_quantiles = quantile(sim_beta)
+results[:mean] = post_summary.value[:, 1]
 for (i, q) in enumerate(post_quantiles.colnames)
     results[Symbol(q)] = post_quantiles.value[:, i]
 end
 
 println("Writing results to $output")
-CSV.write(output, results, delim='\t')
+CSV.write(joinpath(output, "local-estimates.tsv"), results, delim='\t')

@@ -41,7 +41,7 @@ mimix () {
         --monitor simulation/monitor.yml \
         --factors $1 \
         --seed {} \
-        $results_dir/rep{}.tsv ::: $(seq 1 $REPLICATES)
+        $results_dir/rep{} ::: $(seq 1 $REPLICATES)
 }
 
 for factor in "${factors[@]}"; do
