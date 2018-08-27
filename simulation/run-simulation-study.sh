@@ -15,17 +15,27 @@ readonly OUTPUT_DIR
 
 # simulation study settings
 settings_dir=simulation/simulation-study-settings
-setting1=( low-dense.yml  low-error-var.yml  low-block-var.yml)
-setting2=( low-dense.yml  low-error-var.yml high-block-var.yml)
-setting3=( low-dense.yml high-error-var.yml  low-block-var.yml)
-setting4=( low-dense.yml high-error-var.yml high-block-var.yml)
-setting5=(high-dense.yml  low-error-var.yml  low-block-var.yml)
-setting6=(high-dense.yml  low-error-var.yml high-block-var.yml)
-setting7=(high-dense.yml high-error-var.yml  low-block-var.yml)
-setting8=(high-dense.yml high-error-var.yml high-block-var.yml)
+setting01=(high-dense.yml       low-error-var.yml  low-block-var.yml)
+setting02=(high-dense.yml       low-error-var.yml high-block-var.yml)
+setting03=(high-dense.yml      high-error-var.yml  low-block-var.yml)
+setting04=(high-dense.yml      high-error-var.yml high-block-var.yml)
+setting05=(high-dense.yml very-high-error-var.yml  low-block-var.yml)
+setting06=(high-dense.yml very-high-error-var.yml high-block-var.yml)
+setting07=( low-dense.yml       low-error-var.yml  low-block-var.yml)
+setting08=( low-dense.yml       low-error-var.yml high-block-var.yml)
+setting09=( low-dense.yml      high-error-var.yml  low-block-var.yml)
+setting10=( low-dense.yml      high-error-var.yml high-block-var.yml)
+setting11=( low-dense.yml very-high-error-var.yml  low-block-var.yml)
+setting12=( low-dense.yml very-high-error-var.yml high-block-var.yml)
+setting13=(  no-dense.yml       low-error-var.yml  low-block-var.yml)
+setting14=(  no-dense.yml       low-error-var.yml high-block-var.yml)
+setting15=(  no-dense.yml      high-error-var.yml  low-block-var.yml)
+setting16=(  no-dense.yml      high-error-var.yml high-block-var.yml)
+setting17=(  no-dense.yml very-high-error-var.yml  low-block-var.yml)
+setting18=(  no-dense.yml very-high-error-var.yml high-block-var.yml)
 
 # factors to simulate
-factors=(0 20)
+factors=(0)
 
 mimix () {
     settings=()
@@ -34,7 +44,7 @@ mimix () {
     done
     results_dir=$OUTPUT_DIR/mimix-$1-factors/$2
     mkdir -p $results_dir
-    parallel --no-notice $(which julia) simulation/simulate-model.jl \
+    parallel --no-notice julia simulation/simulate-model.jl \
         --inits   simulation/inits.yml \
         --data    simulation/data.yml "${settings[@]}" \
         --hyper   simulation/hyper.yml \
@@ -45,12 +55,57 @@ mimix () {
 }
 
 for factor in "${factors[@]}"; do
-    mimix $factor setting1 "${setting1[@]}"
-    mimix $factor setting2 "${setting2[@]}"
-    mimix $factor setting3 "${setting3[@]}"
-    mimix $factor setting4 "${setting4[@]}"
-    mimix $factor setting5 "${setting5[@]}"
-    mimix $factor setting6 "${setting6[@]}"
-    mimix $factor setting7 "${setting7[@]}"
-    mimix $factor setting8 "${setting8[@]}"
+    mimix $factor setting01 "${setting01[@]}"
+    mimix $factor setting02 "${setting02[@]}"
+    mimix $factor setting03 "${setting03[@]}"
+    mimix $factor setting04 "${setting04[@]}"
+    mimix $factor setting05 "${setting05[@]}"
+    mimix $factor setting06 "${setting06[@]}"
+    mimix $factor setting07 "${setting07[@]}"
+    mimix $factor setting08 "${setting08[@]}"
+    mimix $factor setting09 "${setting09[@]}"
+    mimix $factor setting10 "${setting10[@]}"
+    mimix $factor setting11 "${setting11[@]}"
+    mimix $factor setting12 "${setting12[@]}"
+    mimix $factor setting13 "${setting13[@]}"
+    mimix $factor setting14 "${setting14[@]}"
+    mimix $factor setting15 "${setting15[@]}"
+    mimix $factor setting16 "${setting16[@]}"
+    mimix $factor setting17 "${setting17[@]}"
+    mimix $factor setting18 "${setting18[@]}"
 done
+
+permanova () {
+    settings=()
+    for setting in ${@:2}; do
+        settings+=("$settings_dir/$setting")
+    done
+    results_dir=$OUTPUT_DIR/permanova/$1
+    mkdir -p $results_dir
+    parallel --no-notice julia simulation/simulate-model.jl \
+        --data simulation/data.yml "${settings[@]}" \
+        --permanova \
+        --seed {} \
+        $results_dir/rep{} ::: $(seq 1 $REPLICATES)    
+}
+
+permanova setting01 "${setting01[@]}"
+permanova setting02 "${setting02[@]}"
+permanova setting03 "${setting03[@]}"
+permanova setting04 "${setting04[@]}"
+permanova setting05 "${setting05[@]}"
+permanova setting06 "${setting06[@]}"
+permanova setting07 "${setting07[@]}"
+permanova setting08 "${setting08[@]}"
+permanova setting09 "${setting09[@]}"
+permanova setting10 "${setting10[@]}"
+permanova setting11 "${setting11[@]}"
+permanova setting12 "${setting12[@]}"
+permanova setting13 "${setting13[@]}"
+permanova setting14 "${setting14[@]}"
+permanova setting15 "${setting15[@]}"
+permanova setting16 "${setting16[@]}"
+permanova setting17 "${setting17[@]}"
+permanova setting18 "${setting18[@]}"
+
+$(which julia) simulation/aggregate-simulation-study-results.jl $OUTPUT_DIR

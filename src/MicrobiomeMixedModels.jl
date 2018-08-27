@@ -3,7 +3,7 @@ module MicrobiomeMixedModels
 using Mamba
 using Distributions
 using YAML
-#using RCall
+using RCall
 
 using StatsBase: Histogram, Weights, sample
 
@@ -23,6 +23,7 @@ export
     rand,
     MIMIX,
     MIMIXNoFactors,
+    permanova,
     fit,
     get_model,
     get_inits,
@@ -44,6 +45,7 @@ struct MIMIXNoFactors <: MicrobiomeModel end
 include("generalized-inverse-gaussian.jl")  # distribution used in MIMIX
 include(joinpath("models", "mimix.jl"))
 include(joinpath("models", "mimix-no-factors.jl"))
+include(joinpath("models", "permanova.jl"))
 include("utils.jl")
 
 end  # module

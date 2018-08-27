@@ -45,6 +45,9 @@ function parse_commandline()
         "--no-factors"
             help = "Ignore --factors and use the MIMIX w/o Factors model"
             action = :store_true
+        "--permanova"
+            help = "Run PERMANOVA with vegan::adonis() in R."
+            action = :store_true
     end
     return parse_args(s)
 end
@@ -137,78 +140,110 @@ end
 args = parse_commandline()
 
 output = abspath(args["output"])
-mkdir(output)
-
-@assert 0 < args["iters"]   "Iters must be positive"
-@assert 0 <= args["burnin"] "Burn-in must be non-negative"
-@assert 0 < args["thin"]    "Thin must be positive"
-@assert 0 < args["chains"]  "Chains must be positive"
-@assert 0 <= args["seed"]   "Seed must be non-negative"
-
-factors = args["factors"]
-if args["no-factors"] | factors == 0
-    model_type = MIMIXNoFactors()
-    factors = 0
-elseif factors > 0
-    model_type = MIMIX(factors)
-else
-    ValueError("--factors requires positive integer or --no-factors flag must be given")
+if !isdir(output)
+    mkdir(output)
 end
 
-monitor_conf = load_config(abspath(args["monitor"]))
-hyper_conf = load_config(abspath(args["hyper"]))
-data_conf = load_config(AbstractString[abspath(data_path) for data_path in args["data"]])
-inits_conf = load_config(abspath(args["inits"]))
+@assert 0 <= args["seed"]   "Seed must be non-negative"
 
-model = get_model(model_type, monitor_conf, hyper_conf)
+if args["permanova"]
+    data_conf = load_config(AbstractString[abspath(data_path) for data_path in args["data"]])
 
-seed = args["seed"]
-data, truth = generate_data(; L = factors, seed = seed, data_conf...)
+    seed = args["seed"]
+    data, truth = generate_data(; seed = seed, data_conf...)
 
-inits = get_inits(model_type, inits_conf, data)
-inits = [inits for _ in 1:args["chains"]]
+    println("Beginning PERMANOVA test with vegan::adonis in R.")
+    sim = permanova(data)
+    global_results = DataFrame(
+        reject_global_null = sim[:pval] < 0.05,
+        dense = data_conf[:dense],
+        block_var = data_conf[:block_var],
+        error_var = data_conf[:error_var]
+    )
 
-println("Beginning MCMC simulation")
-mcmc_kwargs = Dict(Symbol(key) => args[key] for key in ["burnin", "thin", "chains"])
-sim = mcmc(model, data, inits, args["iters"]; mcmc_kwargs...)
+    global_test_path = joinpath(output, "global-test.tsv")
+    println("Writing global test results to $global_test_path")
+    CSV.write(global_test_path, global_results, delim='\t')
+else  # mimix
+    @assert 0 < args["iters"]   "Iters must be positive"
+    @assert 0 <= args["burnin"] "Burn-in must be non-negative"
+    @assert 0 < args["thin"]    "Thin must be positive"
+    @assert 0 < args["chains"]  "Chains must be positive"
 
-# summarize global test results
-sim_omega = sim[:, [startswith(name, 'ω') for name in sim.names], :].value
-num_included_each_iter = sum(sim_omega, 2)
-post_prob_inclusion = mean(num_included_each_iter .> 0.0)
-global_results = DataFrame(reject_global_null = post_prob_inclusion > 0.9)
-CSV.write(joinpath(output, "global-test.tsv"), global_results, delim='\t')
+    factors = args["factors"]
+    if args["no-factors"] | factors == 0
+        model_type = MIMIXNoFactors()
+        factors = 0
+    elseif factors > 0
+        model_type = MIMIX(factors)
+    else
+        ValueError("--factors requires positive integer or --no-factors flag must be given")
+    end
 
-# summarize local parameter estimates
-sim_beta_names = sim.names[[startswith(name, 'β') for name in sim.names]]
-sim_beta = sim[:, sim_beta_names, :]
-results = DataFrame(mamba_name = sim_beta_names)
-nodes = Symbol[]
-values = Float64[]
-for name in results[:mamba_name]
-    for (node, value) in truth
-        if startswith(name, String(node))
-            push!(nodes, node)
-            if '[' in name
-                index = name[search(name, '['):end]
-                index = strip(index, ['[', ']'])
-                index = parse.(split(index, ','))
-                push!(values, value[index...])
-            else
-                push!(values, value)
+    monitor_conf = load_config(abspath(args["monitor"]))
+    hyper_conf = load_config(abspath(args["hyper"]))
+    data_conf = load_config(AbstractString[abspath(data_path) for data_path in args["data"]])
+    inits_conf = load_config(abspath(args["inits"]))
+
+    model = get_model(model_type, monitor_conf, hyper_conf)
+
+    seed = args["seed"]
+    data, truth = generate_data(; L = factors, seed = seed, data_conf...)
+
+    inits = get_inits(model_type, inits_conf, data)
+    inits = [inits for _ in 1:args["chains"]]
+
+    println("Beginning MCMC simulation")
+    mcmc_kwargs = Dict(Symbol(key) => args[key] for key in ["burnin", "thin", "chains"])
+    sim = mcmc(model, data, inits, args["iters"]; mcmc_kwargs...)
+
+    # summarize global test results
+    sim_omega = sim[:, [startswith(name, 'ω') for name in sim.names], :].value
+    num_included_each_iter = sum(sim_omega, 2)
+    post_prob_inclusion = mean(num_included_each_iter .> 0.0)
+    global_results = DataFrame(
+        reject_global_null = post_prob_inclusion > 0.9,
+        dense = data_conf[:dense],
+        block_var = data_conf[:block_var],
+        error_var = data_conf[:error_var]
+    )
+
+    global_test_path = joinpath(output, "global-test.tsv")
+    println("Writing global test results to $global_test_path")
+    CSV.write(global_test_path, global_results, delim='\t')
+
+    # summarize local parameter estimates
+    sim_beta_names = sim.names[[startswith(name, 'β') for name in sim.names]]
+    sim_beta = sim[:, sim_beta_names, :]
+    results = DataFrame(mamba_name = sim_beta_names)
+    nodes = Symbol[]
+    values = Float64[]
+    for name in results[:mamba_name]
+        for (node, value) in truth
+            if startswith(name, String(node))
+                push!(nodes, node)
+                if '[' in name
+                    index = name[search(name, '['):end]
+                    index = strip(index, ['[', ']'])
+                    index = parse.(split(index, ','))
+                    push!(values, value[index...])
+                else
+                    push!(values, value)
+                end
             end
         end
     end
-end
-results[:mamba_node] = nodes
-results[:value] = values
+    results[:mamba_node] = nodes
+    results[:value] = values
 
-post_summary = summarystats(sim_beta)
-post_quantiles = quantile(sim_beta)
-results[:mean] = post_summary.value[:, 1]
-for (i, q) in enumerate(post_quantiles.colnames)
-    results[Symbol(q)] = post_quantiles.value[:, i]
-end
+    post_summary = summarystats(sim_beta)
+    post_quantiles = quantile(sim_beta)
+    results[:mean] = post_summary.value[:, 1]
+    for (i, q) in enumerate(post_quantiles.colnames)
+        results[Symbol(q)] = post_quantiles.value[:, i]
+    end
 
-println("Writing results to $output")
-CSV.write(joinpath(output, "local-estimates.tsv"), results, delim='\t')
+    local_estimates_path = joinpath(output, "local-estimates.tsv")
+    println("Writing local parameter estimates to $local_estimates_path")
+    CSV.write(local_estimates_path, results, delim='\t')
+end
