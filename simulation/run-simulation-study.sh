@@ -13,7 +13,8 @@ done
 readonly REPLICATES
 readonly OUTPUT_DIR
 
-# simulation study settings
+# Define simulation study settings
+
 settings_dir=simulation/simulation-study-settings
 setting01=(high-dense.yml       low-error-var.yml  low-block-var.yml)
 setting02=(high-dense.yml       low-error-var.yml high-block-var.yml)
@@ -34,8 +35,7 @@ setting16=(  no-dense.yml      high-error-var.yml high-block-var.yml)
 setting17=(  no-dense.yml very-high-error-var.yml  low-block-var.yml)
 setting18=(  no-dense.yml very-high-error-var.yml high-block-var.yml)
 
-# factors to simulate
-factors=(0)
+# Simulate mimix models
 
 mimix () {
     settings=()
@@ -53,6 +53,9 @@ mimix () {
         --seed {} \
         $results_dir/rep{} ::: $(seq 1 $REPLICATES)
 }
+
+# Array of factors to simulate
+factors=(0 20)
 
 for factor in "${factors[@]}"; do
     mimix $factor setting01 "${setting01[@]}"
@@ -75,6 +78,8 @@ for factor in "${factors[@]}"; do
     mimix $factor setting18 "${setting18[@]}"
 done
 
+# Run PERMANOVA
+
 permanova () {
     settings=()
     for setting in ${@:2}; do
@@ -82,7 +87,7 @@ permanova () {
     done
     results_dir=$OUTPUT_DIR/permanova/$1
     mkdir -p $results_dir
-    parallel --no-notice julia simulation/simulate-model.jl \
+    parallel --no-notice $(which julia) simulation/simulate-model.jl \
         --data simulation/data.yml "${settings[@]}" \
         --permanova \
         --seed {} \
@@ -108,4 +113,7 @@ permanova setting16 "${setting16[@]}"
 permanova setting17 "${setting17[@]}"
 permanova setting18 "${setting18[@]}"
 
-$(which julia) simulation/aggregate-simulation-study-results.jl $OUTPUT_DIR
+# Aggregate and summarize results
+
+$(which julia) simulation/aggregate-simulation-study-results.jl $OUTPUT_DIR $OUTPUT_DIR
+$(which Rscript) simulation/summarize-simulation-results.R $OUTPUT_DIR $OUTPUT_DIR

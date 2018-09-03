@@ -5,20 +5,22 @@ using DataFrames
 function parse_commandline()
     s = ArgParseSettings("Aggregate simulation results from MCMC.")
     @add_arg_table s begin
-        "directory"
-            help = "Directory containing all simulation result tsv files."
-    end
+        "input"
+            help = "Directory from which to walk and read simulation result tsv files."
+        "output"
+            help = "Directory in which to write aggregated simulation result tsv files."
+        end
     return parse_args(s)
 end
 
 args = parse_commandline()
 
-directory = abspath(args["directory"])
-@assert isdir(directory)
+input = abspath(args["input"])
+@assert isdir(input)
 
 global_test_dfs = DataFrame[]
 local_estimates_dfs = DataFrame[] 
-for (root, dirs, files) in walkdir(directory)
+for (root, dirs, files) in walkdir(input)
     for file in files
         if file in ["global-test.tsv", "local-estimates.tsv"]
             df = CSV.read(joinpath(root, file), delim='\t')
@@ -43,5 +45,8 @@ end
 global_test_df = vcat(global_test_dfs...)
 local_estimates_df = vcat(local_estimates_dfs...)
 
-CSV.write(joinpath(directory, "global-test-results.tsv"), global_test_df, delim='\t')
-CSV.write(joinpath(directory, "local-estimates-results.tsv"), local_estimates_df, delim='\t')
+output = abspath(args["output"])
+@assert isdir(output)
+
+CSV.write(joinpath(output, "global-test-results.tsv"), global_test_df, delim='\t')
+CSV.write(joinpath(output, "local-estimates-results.tsv"), local_estimates_df, delim='\t')

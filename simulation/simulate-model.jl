@@ -43,7 +43,7 @@ function parse_commandline()
             arg_type = Int
             help = "Number of factors to use in fitting the MIMIX model."
         "--no-factors"
-            help = "Ignore --factors and use the MIMIX w/o Factors model"
+            help = "Use the MIMIX w/o Factors model (ignores --factors)."
             action = :store_true
         "--permanova"
             help = "Run PERMANOVA with vegan::adonis() in R."
@@ -217,7 +217,7 @@ else  # mimix
     sim_beta = sim[:, sim_beta_names, :]
     results = DataFrame(mamba_name = sim_beta_names)
     nodes = Symbol[]
-    values = Float64[]
+    vals = Float64[]
     for name in results[:mamba_name]
         for (node, value) in truth
             if startswith(name, String(node))
@@ -226,15 +226,15 @@ else  # mimix
                     index = name[search(name, '['):end]
                     index = strip(index, ['[', ']'])
                     index = parse.(split(index, ','))
-                    push!(values, value[index...])
+                    push!(vals, value[index...])
                 else
-                    push!(values, value)
+                    push!(vals, value)
                 end
             end
         end
     end
     results[:mamba_node] = nodes
-    results[:value] = values
+    results[:value] = vals
 
     post_summary = summarystats(sim_beta)
     post_quantiles = quantile(sim_beta)
