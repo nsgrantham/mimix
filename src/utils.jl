@@ -41,22 +41,49 @@ function logfgrad(θ, θ_mean, θ_var, y, m)
     logf, grad
 end
 
-function parse_config(conf)
-    greek = Dict(
-        "beta" => "β",
-        "epsilon" => "ϵ",
-        "gamma" => "γ",
-        "lambda" => "λ",
-        "mu" => "μ",
-        "nu" => "ν",
-        "omega" => "ω",
-        "phi" => "ϕ",
-        "pi" => "π",
-        "psi" => "ψ",  # must come after epsilon
-        "tau" => "τ",
-        "theta" => "θ",
-        "xi" => "ξ"
+function get_post(sim, data, param)
+    N = data[:N]
+    K = data[:K]
+    L = data[:L]
+    p = data[:p]
+    num_blocking_factors = data[:num_blocking_factors]
+    param_names = Dict{Symbol, Any}(
+        :Y => ["Y[$i, $k]" for i in 1:N, k in 1:K],
+        :ϕ => ["ϕ[$i, $k]" for i in 1:N, k in 1:K],
+        :θ => ["θ[$i, $k]" for i in 1:N, k in 1:K],
+        :θ_mean => ["θ_mean[$k]" for k in 1:K],
+        :θ_var => ["θ_var[$k]" for k in 1:K],
+        :μ => ["μ[k]" for k in 1:K],
+        :μ_var => ["μ_var"],
+        :β => ["β[$k, $j]" for k in 1:K, j in 1:p],
+        :β_full => [],
+        :β_var => ["β_var[$j]" for j in 1:p],
+        :γ => ["γ[$k, $r]" for k in 1:K, r in 1:num_blocking_factors],
+        :γ_var => ["γ_var[$r]" for r in 1:num_blocking_factors],
+        :ω => ["ω[$l, $j]" for j in 1:p, l in 1:L],
+        :π => ["π[$j]" for j in 1:p],
+        :Λ => ["Λ[$l, $k]" for l in 1:L, k in 1:K],
+        :λ_var => ["λ_var[$l, $k]" for l in 1:L, k in 1:K],
+        :a => ["a[$l]" for l in 1:L],
+        :ψ => ["ψ[$l, $k]" for l in 1:L, k in 1:K],
+        :ξ => ["ξ[$l, $k]" for l in 1:L, k in 1:K],
+        :τ => ["τ[$l]" for l in 1:L],
+        :ν => ["ν"],
+        :g => ["g[$l, $r]" for l in 1:L, r in 1:num_blocking_factors],
+        :g_var => ["g_var[$r]" for r in 1:num_blocking_factors],
+        :b => ["b[$l, $j]" for l in 1:L, j in 1:p],
+        :b_full => ["b[$k, $j]" for k in 1:K, j in 1:p],
+        :b_var => ["b_var[$j]" for j in 1:p],
     )
+    _, _, chains = size(sim)
+    names = param_names[param]
+    post = vcat([sim[:, vec(names), c].value for c in 1:chains]...)
+    post = DataFrame(squeeze(post, 3))
+    names!(post, [Symbol(name) for name in vec(names)])
+    return post
+end
+
+function parse_config(conf)
     parsed_conf = Dict{Symbol, Any}()
     for key in keys(conf)
         param = key
@@ -69,6 +96,25 @@ function parse_config(conf)
     end
     return parsed_conf
 end
+    
+greek = Dict(
+    "beta" => "β",
+    "epsilon" => "ϵ",
+    "gamma" => "γ",
+    "lambda" => "λ",
+    "Lambda" => "Λ",
+    "mu" => "μ",
+    "nu" => "ν",
+    "omega" => "ω",
+    "phi" => "ϕ",
+    "pi" => "π",
+    "psi" => "ψ",  # must come after epsilon in Dict
+    "tau" => "τ",
+    "theta" => "θ",
+    "xi" => "ξ"
+)
+
+latin = Dict([(v, k) for (k, v) in greek])
 
 function load_config(filename::AbstractString)
     @assert isfile(filename)
@@ -77,3 +123,4 @@ function load_config(filename::AbstractString)
 end
 
 load_config(filenames::Vector{T}) where T <: AbstractString = merge!([load_config(f) for f in filenames]...)
+

@@ -6,6 +6,7 @@ using YAML
 using RCall
 
 using StatsBase: Histogram, Weights, sample
+using DataFrames: DataFrame, names!
 
 import Base: convert, maximum
 import Distributions: params, partype, mean, var, mode, pdf, logpdf, rand
@@ -27,6 +28,9 @@ export
     fit,
     get_model,
     get_inits,
+    get_post,
+    clr,
+    iclr,
     parse_config,
     load_config
 

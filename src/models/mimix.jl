@@ -101,7 +101,7 @@ function get_model(::MIMIX, monitor::Dict{Symbol, Any}, hyper::Dict{Symbol, Any}
             (L, K, λ_var) -> MultivariateDistribution[
                 MvNormal(zeros(K), sqrt.(λ_var[l, :])) for l in 1:L
             ],
-            false
+            monitor[:Λ]
         ),
 
         λ_var = Logical(2,
