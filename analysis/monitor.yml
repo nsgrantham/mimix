@@ -1,7 +1,7 @@
 
 Y: false
 phi: false
-theta: false
+theta: true
 theta_mean: false
 theta_var: true
 mu: false
