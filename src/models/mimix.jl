@@ -63,7 +63,7 @@ function get_model(::MIMIX, monitor::Dict{Symbol, Any}, hyper::Dict{Symbol, Any}
 
         θ_mean = Logical(2,
             (μ, ΛF) -> ΛF .+ transpose(μ),
-            false
+            monitor[:θ_mean]
         ),
 
         θ_var = Stochastic(1,

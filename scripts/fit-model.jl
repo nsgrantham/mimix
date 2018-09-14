@@ -136,10 +136,6 @@ else  # mimix
     mcmc_kwargs = Dict(Symbol(key) => args[key] for key in ["burnin", "thin", "chains"])
     sim = mcmc(model, data, inits, args["iters"]; mcmc_kwargs...)
 
-    #posterior_out = joinpath(output, "posterior-samples.jls")
-    #println("Saving posterior samples to $posterior_out")
-    #write(posterior_out, sim)
-
     monitor_Y = pop!(monitor_conf, :Y)
     monitor_ϕ = pop!(monitor_conf, :ϕ)
     monitor_θ = pop!(monitor_conf, :θ)
@@ -197,8 +193,6 @@ else  # mimix
             θ_post = convert(Matrix, get_post(sim, data, :θ))
         end
 
-        #θ_post = sim[:, vec(["θ[$i, $k]" for i in 1:data[:N], k in 1:data[:K]]), :].value
-        #θ_post = vcat([θ_post[:, :, i] for i in 1:size(θ_post, 3)]...)
         ϕ = zeros(data[:N], data[:K])
         Y_pred_iter = zeros(data[:N], data[:K])
         n_iter = size(θ_post, 1)

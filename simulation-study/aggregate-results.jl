@@ -18,6 +18,9 @@ args = parse_commandline()
 input = abspath(args["input"])
 @assert isdir(input)
 
+output = abspath(args["output"])
+@assert isdir(output)
+
 global_test_dfs = DataFrame[]
 local_estimates_dfs = DataFrame[] 
 for (root, dirs, files) in walkdir(input)
@@ -44,9 +47,6 @@ end
 
 global_test_df = vcat(global_test_dfs...)
 local_estimates_df = vcat(local_estimates_dfs...)
-
-output = abspath(args["output"])
-@assert isdir(output)
 
 CSV.write(joinpath(output, "global-test-results.tsv"), global_test_df, delim='\t')
 CSV.write(joinpath(output, "local-estimates-results.tsv"), local_estimates_df, delim='\t')

@@ -51,12 +51,12 @@ function get_model(::MIMIXNoFactors, monitor::Dict{Symbol, Any}, hyper::Dict{Sym
 
         θ_mean = Logical(2,
             (μ, Xβ, sumZγ) -> Xβ + sumZγ .+ transpose(μ),
-            false
+            monitor[:θ_mean]
         ),
 
         θ_var = Stochastic(1,
             () -> InverseGamma(1, 1),
-            false
+            monitor[:θ_var]
         ),
 
         # Population mean

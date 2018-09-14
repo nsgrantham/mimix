@@ -15,7 +15,7 @@ readonly OUTPUT_DIR
 
 # Define simulation study settings
 
-settings_dir=simulation/simulation-study-settings
+settings_dir=simulation-study/configs
 setting01=(high-dense.yml       low-error-var.yml  low-block-var.yml)
 setting02=(high-dense.yml       low-error-var.yml high-block-var.yml)
 setting03=(high-dense.yml      high-error-var.yml  low-block-var.yml)
@@ -44,11 +44,11 @@ mimix () {
     done
     results_dir=$OUTPUT_DIR/mimix-$1-factors/$2
     mkdir -p $results_dir
-    parallel --no-notice julia simulation/simulate-model.jl \
-        --inits   simulation/inits.yml \
-        --data    simulation/data.yml "${settings[@]}" \
-        --hyper   simulation/hyper.yml \
-        --monitor simulation/monitor.yml \
+    parallel --no-notice julia scripts/simulate-model.jl \
+        --inits   simulation-study/configs/inits.yml \
+        --data    simulation-study/configs/data.yml "${settings[@]}" \
+        --hyper   simulation-study/configs/hyper.yml \
+        --monitor simulation-study/configs/monitor.yml \
         --factors $1 \
         --seed {} \
         $results_dir/rep{} ::: $(seq 1 $REPLICATES)
@@ -87,8 +87,8 @@ permanova () {
     done
     results_dir=$OUTPUT_DIR/permanova/$1
     mkdir -p $results_dir
-    parallel --no-notice $(which julia) simulation/simulate-model.jl \
-        --data simulation/data.yml "${settings[@]}" \
+    parallel --no-notice $(which julia) scripts/simulate-model.jl \
+        --data simulation-study/configs/data.yml "${settings[@]}" \
         --permanova \
         --seed {} \
         $results_dir/rep{} ::: $(seq 1 $REPLICATES)    
