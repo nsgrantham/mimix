@@ -1,21 +1,28 @@
-library(ggplot2)
-library(dplyr)
-library(readr)
+library(tidyverse)
+library(argparse)
 library(reshape2)
-library(forcats)
-library(stringr)
 theme_set(theme_minimal())
+
+parser <- ArgumentParser()
+parser$add_argument("input", help = "Directory from which to read files produced by run-netnet-analysis.sh.")
+parser$add_argument("output", help = "Directory in which to write output files.")
+parser$add_argument("data", help = "Directory from which to read data Y.csv, X.csv, Z.csv.")
+args <- parser$parse_args()
+
+stopifnot(dir.exists(args$input))
+stopifnot(dir.exists(args$output))
+stopifnot(dir.exists(args$data))
 
 # Figure 1 was created with Monodraw (https://monodraw.helftone.com)
 
 ## NutNet data analysis
 
-Y <- read.csv(file.path("nutnet-analysis", "data", "Y.csv"), header=FALSE)
-X <- read.csv(file.path("nutnet-analysis", "data", "X.csv"), header=FALSE)
-Z <- read.csv(file.path("nutnet-analysis", "data", "Z.csv"), header=FALSE)
+Y <- read.csv(file.path(args$data, "Y.csv"), header=FALSE)
+X <- read.csv(file.path(args$data, "X.csv"), header=FALSE)
+Z <- read.csv(file.path(args$data, "Z.csv"), header=FALSE)
 K <- ncol(Y)
 
-if (file.exists(file.path("nutnet-analysis", "data", "tax.csv"))) {
+if (file.exists(file.path(args$data, "tax.csv"))) {
   tax <- read.csv(file.path("data", "tax.csv"), header=FALSE, stringsAsFactors = FALSE)
   tax$V2[tax$V2 == "None"] <- "; ; ; ; ; ; Fungi sp"
   tax_table <- as.data.frame(do.call(rbind, strsplit(tax$V2, "; ")), stringsAsFactors = FALSE)
@@ -38,11 +45,11 @@ plot_post_pred_check <- function(obs, preds, group, xlab="", ylab="") {
   limits <- aes(
     ymin = post_pred_bounds[, 1], 
     ymax = post_pred_bounds[, 2], 
-    alpha=signif
+    alpha = signif
   )
-  ggplot(df, aes(x=x, y=y)) + 
-    geom_errorbar(limits, width=0.1, size=0.4) + 
-    scale_alpha_manual(values=c(0.3, 1)) +
+  ggplot(df, aes(x, y)) + 
+    geom_errorbar(limits, width = 0.1, size = 0.4) + 
+    scale_alpha_manual(values = c(0.3, 1)) +
     geom_point(size = 0.7, stroke = 0, shape = 16) +
     facet_grid(. ~ group) +
     labs(x = xlab, y = ylab) +
@@ -51,16 +58,13 @@ plot_post_pred_check <- function(obs, preds, group, xlab="", ylab="") {
     guides(alpha=FALSE)
 }
 
-obs_max_count <- read.delim(file.path("nutnet-analysis", "results", "mimix", "obs-max-count.tsv"), header=FALSE)
-obs_prop_eq_zero <- read.delim(file.path("nutnet-analysis", "results", "mimix", "obs-prop-eq-zero.tsv"), header=FALSE)
-obs_prop_leq_two <- read.delim(file.path("nutnet-analysis", "results", "mimix", "obs-prop-leq-two.tsv"), header=FALSE)
-post_pred_max_count <- t(read.delim(file.path("nutnet-analysis", "results", "mimix", "post-pred-max-count.tsv"), header=FALSE))
-post_pred_prop_eq_zero <- t(read.delim(file.path("nutnet-analysis", "results", "mimix", "post-pred-prop-eq-zero.tsv"), header=FALSE))
-post_pred_prop_leq_two <- t(read.delim(file.path("nutnet-analysis", "results", "mimix", "post-pred-prop-leq-two.tsv"), header=FALSE))
-#plot_post_pred_check(obs_max_count, post_pred_max_count)
-#plot_post_pred_check(obs_prop_eq_zero, post_pred_prop_eq_zero, x="Sample", y="Proportion of OTUs in sample with no reads", title="Posterior predictive check of sparsity")
-#ggsave("../figures/post-pred-prop-eq-zero.png", width=7.5, height=6)
-#plot_post_pred_check(obs_prop_leq_one, post_pred_prop_leq_one)
+obs_max_count <- read.delim(file.path(args$input, "mimix", "obs-max-count.tsv"), header=FALSE)
+obs_prop_eq_zero <- read.delim(file.path(args$input, "mimix", "obs-prop-eq-zero.tsv"), header=FALSE)
+obs_prop_leq_two <- read.delim(file.path(args$input, "mimix", "obs-prop-leq-two.tsv"), header=FALSE)
+post_pred_max_count <- t(read.delim(file.path(args$input, "mimix", "post-pred-max-count.tsv"), header=FALSE))
+post_pred_prop_eq_zero <- t(read.delim(file.path(args$input, "mimix", "post-pred-prop-eq-zero.tsv"), header=FALSE))
+post_pred_prop_leq_two <- t(read.delim(file.path(args$input, "mimix", "post-pred-prop-leq-two.tsv"), header=FALSE))
+
 obs_order <- order(obs_prop_eq_zero)
 obs_prop_eq_zero <- obs_prop_eq_zero[obs_order, ]
 post_pred_prop_eq_zero <- post_pred_prop_eq_zero[obs_order, ]
@@ -72,21 +76,21 @@ p <- plot_post_pred_check(c(obs_prop_eq_zero, obs_prop_leq_two),
                      group = c(rep("Exactly zero reads", length(obs_prop_eq_zero)), 
                                rep("Two or fewer reads", length(obs_prop_leq_two))),
                      xlab="Sample IDs", ylab="Proportion of OTUs in sample")#, 
-ggsave(file.path("nutnet-analysis", "figures", "post-pred-sparsity.png"), plot = p, width=7.5, height=4)
+ggsave(file.path(args$output, "post-pred-sparsity.png"), plot = p, width = 7.5, height = 4)
 
 
 ## Global variable selection results
 
 # MIMIX posterior probability of variable inclusion
 
-omega <- read_tsv(file.path("nutnet-analysis", "results", "mimix", "omega.tsv"))
+omega <- read_tsv(file.path(args$input, "mimix", "omega.tsv"))
 mean(rowSums(select(omega, ends_with("1]"))) > 0)  # herbivore exclusion
 mean(rowSums(select(omega, ends_with("2]"))) > 0)  # nutrient amendment
 mean(rowSums(select(omega, ends_with("3]"))) > 0)  # interaction
 
 # MIMIX w/o Factors posterior probability of variable inclusion
 
-omega <- read_tsv(file.path("nutnet-analysis", "results", "mimix-no-factors", "omega.tsv"))
+omega <- read_tsv(file.path(args$input, "mimix-no-factors", "omega.tsv"))
 mean(rowSums(select(omega, ends_with("1]"))) > 0)  # herbivore exclusion
 mean(rowSums(select(omega, ends_with("2]"))) > 0)  # nutrient amendment
 mean(rowSums(select(omega, ends_with("3]"))) > 0)  # interaction
@@ -94,7 +98,7 @@ mean(rowSums(select(omega, ends_with("3]"))) > 0)  # interaction
 
 ## Get ordering of OTUs from hierarchical clustering of the factor correlation matrix
 
-Lambda <- as.matrix(read.delim(file.path("nutnet-analysis", "results", "mimix", "Lambda-postmean.tsv"), header=FALSE))
+Lambda <- as.matrix(read.delim(file.path(args$input, "mimix", "Lambda-postmean.tsv"), header=FALSE))
 LambdatLambda <- t(Lambda) %*% Lambda
 R <- cov2cor(LambdatLambda)
 C <- abs(R)
@@ -104,8 +108,7 @@ R <- R[ids, ids]
 LambdatLambda <- LambdatLambda[ids, ids]
 otu_names <- otu_names[ids]
 
-beta2 <- select(read_tsv(file.path("nutnet-analysis", "results", "mimix", "beta.tsv")), ends_with("2]"))
-#beta2 <- read_tsv(file.path("results", "analyze", "mimix-beta2.csv"), col_names=FALSE)
+beta2 <- select(read_tsv(file.path(args$input, "mimix", "beta.tsv")), ends_with("2]"))
 beta2 <- beta2[, ids]      # order OTUs
 alpha <- 0.05
 quant_beta <- apply(beta2, 2, function(x) quantile(x, probs = c(alpha/2, 1-alpha/2)))
@@ -133,7 +136,7 @@ p <- ggplot(df_beta, aes(otus, beta, alpha = signif), size = 0.1) +
   labs(x = "OTUs", y = expression(paste("Posterior ", beta))) +
   theme(axis.ticks.x = element_blank()) +
   coord_flip()
-ggsave(file.path("nutnet-analysis", "figures", "betarange.png"), width=3.75, height=9)
+ggsave(file.path(args$output, "betarange.png"), width=3.75, height=9)
 
 
 ## Figure 4b: Posterior beta estimates for nutrient supplement (only significantly non-zero)
@@ -158,13 +161,13 @@ p <- ggplot(df_beta_signif, aes(otus, beta), size = 0.1) +
   labs(x = "OTUs", y = expression(paste("Posterior ", beta))) +
   theme(axis.text.y = element_text(size=6)) +
   coord_flip()
-ggsave(file.path("nutnet-analysis", "figures", "betarange-signif.png"), plot = p, width = 3.75, height = 9)
+ggsave(file.path(args$output, "betarange-signif.png"), plot = p, width = 3.75, height = 9)
 
 
 ## Figure 5: Proportion of variance explained by site- and block-level effects
 
-g_var <- read_tsv(file.path("nutnet-analysis", "results", "mimix", "g_var.tsv"))
-theta_var <- read_tsv(file.path("nutnet-analysis", "results", "mimix", "theta_var.tsv"))
+g_var <- read_tsv(file.path(args$input, "mimix", "g_var.tsv"))
+theta_var <- read_tsv(file.path(args$input, "mimix", "theta_var.tsv"))
 theta_var <- theta_var[, ids]
 
 g_var_hat <- colMeans(g_var)
@@ -193,7 +196,7 @@ p <- ggplot(df_var) +
   labs(x = expression(paste("Estimated error variance, ", hat(sigma)[k]^2)),
        y = expression(paste("Estimated prop. of variance due to site- & block-level effects, ", hat(eta)[k])))
 
-ggsave(file.path("nutnet-analysis", "figures", "proportion-variance.png"), plot = p, width = 7.5, height = 5)
+ggsave(file.path(args$output, "proportion-variance.png"), plot = p, width = 7.5, height = 5)
 
 
 ## Factor correlation matrix with significant OTUs marked on the diagonal
@@ -235,4 +238,4 @@ p <- ggplot(data = R_melt, aes(x = Var2, y = Var1, fill = value2)) +
     axis.ticks = element_blank(),
     legend.position = c(0.9, 0.8)
   )
-ggsave(file.path("nutnet-analysis", "figures", "correlation.png"), width = 10, height = 10)
+ggsave(file.path(args$output, "correlation.png"), width = 10, height = 10)

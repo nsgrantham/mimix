@@ -10,6 +10,7 @@ function permanova(data)
     x <- data.frame($X)
     x[] <- lapply(x, as.factor)
     sim <- adonis($Y ~ $X + $Z, method="bray", nperm=9999)
+    print(sim)
     pval <- sim$aov.tab$`Pr(>F)`[1]
     """
     @rget pval

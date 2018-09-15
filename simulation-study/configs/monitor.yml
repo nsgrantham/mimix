@@ -14,6 +14,7 @@ beta_full: false
 omega: true
 pi: false
 
+Lambda: false
 lambda_var: false
 psi: false
 nu: false

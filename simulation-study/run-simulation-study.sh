@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-set -eo pipefail
+set -euo pipefail
 
 while getopts "r:o:" option; do
     case "${option}" in
@@ -10,8 +10,6 @@ while getopts "r:o:" option; do
         :) echo "Invalid option: ${OPTARG} requires an argument" 1>&2;;
     esac
 done
-readonly REPLICATES
-readonly OUTPUT_DIR
 
 # Define simulation study settings
 
@@ -35,7 +33,42 @@ setting16=(  no-dense.yml      high-error-var.yml high-block-var.yml)
 setting17=(  no-dense.yml very-high-error-var.yml  low-block-var.yml)
 setting18=(  no-dense.yml very-high-error-var.yml high-block-var.yml)
 
-# Simulate mimix models
+# Run PERMANOVA
+
+permanova () {
+    settings=()
+    for setting in ${@:2}; do
+        settings+=("$settings_dir/$setting")
+    done
+    results_dir=$OUTPUT_DIR/permanova/$1
+    mkdir -p $results_dir
+    parallel --no-notice julia scripts/sim-mcmc.jl \
+        --data simulation-study/configs/data.yml "${settings[@]}" \
+        --permanova \
+        --seed {} \
+        $results_dir/rep{} ::: $(seq 1 $REPLICATES)    
+}
+
+permanova setting01 "${setting01[@]}"
+permanova setting02 "${setting02[@]}"
+permanova setting03 "${setting03[@]}"
+permanova setting04 "${setting04[@]}"
+permanova setting05 "${setting05[@]}"
+permanova setting06 "${setting06[@]}"
+permanova setting07 "${setting07[@]}"
+permanova setting08 "${setting08[@]}"
+permanova setting09 "${setting09[@]}"
+permanova setting10 "${setting10[@]}"
+permanova setting11 "${setting11[@]}"
+permanova setting12 "${setting12[@]}"
+permanova setting13 "${setting13[@]}"
+permanova setting14 "${setting14[@]}"
+permanova setting15 "${setting15[@]}"
+permanova setting16 "${setting16[@]}"
+permanova setting17 "${setting17[@]}"
+permanova setting18 "${setting18[@]}"
+
+# Run MIMIX models
 
 mimix () {
     settings=()
@@ -44,7 +77,7 @@ mimix () {
     done
     results_dir=$OUTPUT_DIR/mimix-$1-factors/$2
     mkdir -p $results_dir
-    parallel --no-notice julia scripts/simulate-model.jl \
+    parallel --no-notice julia scripts/sim-mcmc.jl \
         --inits   simulation-study/configs/inits.yml \
         --data    simulation-study/configs/data.yml "${settings[@]}" \
         --hyper   simulation-study/configs/hyper.yml \
@@ -78,42 +111,8 @@ for factor in "${factors[@]}"; do
     mimix $factor setting18 "${setting18[@]}"
 done
 
-# Run PERMANOVA
-
-permanova () {
-    settings=()
-    for setting in ${@:2}; do
-        settings+=("$settings_dir/$setting")
-    done
-    results_dir=$OUTPUT_DIR/permanova/$1
-    mkdir -p $results_dir
-    parallel --no-notice $(which julia) scripts/simulate-model.jl \
-        --data simulation-study/configs/data.yml "${settings[@]}" \
-        --permanova \
-        --seed {} \
-        $results_dir/rep{} ::: $(seq 1 $REPLICATES)    
-}
-
-permanova setting01 "${setting01[@]}"
-permanova setting02 "${setting02[@]}"
-permanova setting03 "${setting03[@]}"
-permanova setting04 "${setting04[@]}"
-permanova setting05 "${setting05[@]}"
-permanova setting06 "${setting06[@]}"
-permanova setting07 "${setting07[@]}"
-permanova setting08 "${setting08[@]}"
-permanova setting09 "${setting09[@]}"
-permanova setting10 "${setting10[@]}"
-permanova setting11 "${setting11[@]}"
-permanova setting12 "${setting12[@]}"
-permanova setting13 "${setting13[@]}"
-permanova setting14 "${setting14[@]}"
-permanova setting15 "${setting15[@]}"
-permanova setting16 "${setting16[@]}"
-permanova setting17 "${setting17[@]}"
-permanova setting18 "${setting18[@]}"
 
 # Aggregate and summarize results
 
-$(which julia) simulation/aggregate-simulation-study-results.jl $OUTPUT_DIR $OUTPUT_DIR
-$(which Rscript) simulation/summarize-simulation-results.R $OUTPUT_DIR $OUTPUT_DIR
+julia simulation-study/aggregate-results.jl $OUTPUT_DIR $OUTPUT_DIR
+Rscript simulation-study/summarize-results.R $OUTPUT_DIR $OUTPUT_DIR

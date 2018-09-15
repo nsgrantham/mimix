@@ -30,7 +30,6 @@ function parse_commandline()
             help = "Number of MCMC chains to run."
         "--seed"
             arg_type = Int
-            default = 1
             help = "Reseed the random number generator."
         "--monitor"
             help = "YAML defining the nodes to monitor through MCMC."
@@ -40,10 +39,8 @@ function parse_commandline()
             help = "YAML defining hyperparameters of stochastic node priors."
         "--factors"
             arg_type = Int
+            default = 0
             help = "Number of factors to use in fitting the MIMIX model."
-        "--no-factors"
-            help = "Use the MIMIX w/o Factors model (ignores --factors)."
-            action = :store_true
         "--permanova"
             help = "Run PERMANOVA with vegan::adonis() in R."
             action = :store_true
@@ -59,8 +56,6 @@ function read_data(dir; L=0)
     X = readcsv(joinpath(dir, "X.csv"), Int)
     println("Reading Y.csv")
     Y = readcsv(joinpath(dir, "Y.csv"), Int)
-    Y = Y[:, 1:100]
-    println(size(Y))
     println("Reading Z.csv")
     Z = readcsv(joinpath(dir, "Z.csv"), Int)
     N, K = size(Y)
@@ -95,6 +90,10 @@ input = abspath(args["input"])
 
 output = abspath(args["output"])
 
+if args["seed"]
+    srand(args["seed"])
+end
+
 if args["permanova"]
     data = read_data(input)
 
@@ -112,13 +111,12 @@ else  # mimix
     @assert 0 < args["chains"]  "Chains must be positive"
 
     factors = args["factors"]
-    if args["no-factors"] | factors == 0
-        model_type = MIMIXNoFactors()
-        factors = 0
-    elseif factors > 0
+    if factors > 0
         model_type = MIMIX(factors)
+    elseif factors == 0
+        model_type = MIMIXNoFactors()
     else
-        ValueError("--factors requires positive integer or --no-factors flag must be given")
+        ValueError("--factors requires a non-negative integer")
     end
 
     monitor_conf = load_config(abspath(args["monitor"]))

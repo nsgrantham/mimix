@@ -41,10 +41,8 @@ function parse_commandline()
             help = "YAML defining hyperparameters of stochastic node priors."
         "--factors"
             arg_type = Int
+            default = 0
             help = "Number of factors to use in fitting the MIMIX model."
-        "--no-factors"
-            help = "Use the MIMIX w/o Factors model (ignores --factors)."
-            action = :store_true
         "--permanova"
             help = "Run PERMANOVA with vegan::adonis() in R."
             action = :store_true
@@ -171,13 +169,12 @@ else  # mimix
     @assert 0 < args["chains"]  "Chains must be positive"
 
     factors = args["factors"]
-    if args["no-factors"] | factors == 0
-        model_type = MIMIXNoFactors()
-        factors = 0
-    elseif factors > 0
+    if factors > 0
         model_type = MIMIX(factors)
+    elseif factors == 0
+        model_type = MIMIXNoFactors()
     else
-        ValueError("--factors requires positive integer or --no-factors flag must be given")
+        ValueError("--factors requires a non-negative integer.")
     end
 
     monitor_conf = load_config(abspath(args["monitor"]))
@@ -194,6 +191,7 @@ else  # mimix
     inits = [inits for _ in 1:args["chains"]]
 
     println("Beginning MCMC simulation")
+    srand(args["seed"])
     mcmc_kwargs = Dict(Symbol(key) => args[key] for key in ["burnin", "thin", "chains"])
     sim = mcmc(model, data, inits, args["iters"]; mcmc_kwargs...)
 
