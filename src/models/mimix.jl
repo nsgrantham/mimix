@@ -145,7 +145,7 @@ function get_model(::MIMIX, monitor::Dict{Symbol, Any}, hyper::Dict{Symbol, Any}
         ),
 
         ν = Stochastic(
-            () -> Gamma(1, 1),
+            () -> Gamma(hyper[:c0], hyper[:d0]),
             monitor[:ν]
         ),
 

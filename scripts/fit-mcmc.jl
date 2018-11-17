@@ -58,11 +58,11 @@ end
 
 function read_data(dir; L=0)
     println("Reading X.csv")
-    X = DelimitedFiles.readcsv(joinpath(dir, "X.csv"), Int)
+    X = convert(Matrix{Int}, CSV.read(joinpath(dir, "X.csv"), datarow=1))
     println("Reading Y.csv")
-    Y = DelimitedFiles.readcsv(joinpath(dir, "Y.csv"), Int)
+    Y = convert(Matrix{Int}, CSV.read(joinpath(dir, "Y.csv"), datarow=1))
     println("Reading Z.csv")
-    Z = DelimitesFiles.readcsv(joinpath(dir, "Z.csv"), Int)
+    Z = convert(Matrix{Int}, CSV.read(joinpath(dir, "Z.csv"), datarow=1))
     N, K = size(Y)
     m = sum(Y, dims=2)
     q = maximum(vec(Z))
@@ -80,7 +80,7 @@ function read_data(dir; L=0)
     data[:num_blocking_factors] = size(Z, 2)
     data[:blocking_factor] = Dict{Int, Int}()
     for level in unique(Z)
-        bf = findall(vec(any(Z .== level, 1)))
+        bf = findall(vec(any(Z .== level, dims=1)))
         @assert length(bf) == 1
         data[:blocking_factor][level] = bf[1]
     end

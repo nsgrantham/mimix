@@ -203,7 +203,7 @@ function get_model(::MIMIXNoFactors, monitor::Dict{Symbol, Any}, hyper::Dict{Sym
                 A = θ - sumZγ .- transpose(μ)
                 for k in 1:K
                     Xtilde = X * Diagonal(ω[k, :])
-                    Sigma = inv(transpose(Xtilde) * Xtilde ./ θ_var[k] + Diagonal(1 ./ β_var))
+                    Sigma = inv(cholesky(Hermitian(transpose(Xtilde) * Xtilde ./ θ_var[k] + Diagonal(1 ./ β_var))))
                     mu = Sigma * ((transpose(Xtilde) * A[:, k]) ./ θ_var[k])
                     β_full[k, :] = rand(MvNormal(mu, Sigma))
                 end

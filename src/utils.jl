@@ -78,7 +78,7 @@ function get_post(sim, data, param)
     _, _, chains = size(sim)
     names = param_names[param]
     post = vcat([sim[:, vec(names), c].value for c in 1:chains]...)
-    post = DataFrame(squeeze(post, 3))
+    post = DataFrame(dropdims(post, dims=3))
     names!(post, [Symbol(name) for name in vec(names)])
     return post
 end
