@@ -1,23 +1,4 @@
-#doc"""
-#    GeneralizedInverseGaussian(a,b,p)
-#
-#The *generalized inverse Gaussian distribution* with parameters a > 0, b > 0, p real,
-#and modified Bessel function of the second kind K_p, has probability density function
-#
-#$f(x; a, b, p) = \frac{(a/b)^{p/2}}{2K_p(\sqrt{ab})}x^{(p-1)}
-#e^{-(ax+b/x)/2}, \quad x > 0$
-#
-#``julia
-#GeneralizedInverseGaussian(a, b, p)    # Generalized Inverse Gaussian distribution with parameters parameters a > 0, b > 0 and p real
-#
-#params(d)           # Get the parameters, i.e. (a, b, p)
-#``
-#
-#External links
-#
-#* [Generalized Inverse Gaussian distribution on Wikipedia](https://en.wikipedia.org/wiki/Generalized_inverse_Gaussian_distribution)
-#
-#"""
+
 struct GeneralizedInverseGaussian{T<:Real} <: ContinuousUnivariateDistribution
     a::T
     b::T
@@ -29,7 +10,7 @@ struct GeneralizedInverseGaussian{T<:Real} <: ContinuousUnivariateDistribution
     end
 end
 
-GeneralizedInverseGaussian{T<:Real}(a::T, b::T, p::T) = GeneralizedInverseGaussian{T}(a, b, p)
+GeneralizedInverseGaussian(a::T, b::T, p::T) where {T<:Real} = GeneralizedInverseGaussian{T}(a, b, p)
 GeneralizedInverseGaussian(a::Real, b::Real, p::Real) = GeneralizedInverseGaussian(promote(a, b, p)...)
 GeneralizedInverseGaussian(a::Integer, b::Integer, p::Integer) = GeneralizedInverseGaussian(Float64(a), Float64(b), Float64(p))
 
@@ -38,17 +19,17 @@ Distributions.@distr_support GeneralizedInverseGaussian 0.0 Inf
 
 #### Conversions
 
-function convert{T <: Real, S <: Real}(::Type{GeneralizedInverseGaussian{T}}, a::S, b::S, p::S)
+function convert(::Type{GeneralizedInverseGaussian{T}}, a::S, b::S, p::S) where {T <: Real, S <: Real}
     GeneralizedInverseGaussian(T(a), T(b), T(p))
 end
-function convert{T <: Real, S <: Real}(::Type{GeneralizedInverseGaussian{T}}, d::GeneralizedInverseGaussian{S})
+function convert(::Type{GeneralizedInverseGaussian{T}}, d::GeneralizedInverseGaussian{S}) where {T <: Real, S <: Real}
     GeneralizedInverseGaussian(T(d.a), T(d.b), T(d.p))
 end
 
 #### Parameters
 
 params(d::GeneralizedInverseGaussian) = (d.a, d.b, d.p)
-@inline partype{T<:Real}(d::GeneralizedInverseGaussian{T}) = T
+@inline partype(d::GeneralizedInverseGaussian{T}) where {T <: Real} = T
 
 
 #### Statistics
@@ -71,7 +52,7 @@ mode(d::GeneralizedInverseGaussian) = ((d.p - 1) + sqrt((d.p - 1)^2 + d.a * d.b)
 
 #### Evaluation
 
-function pdf{T<:Real}(d::GeneralizedInverseGaussian{T}, x::Real)
+function pdf(d::GeneralizedInverseGaussian{T}, x::Real) where {T <: Real}
     if x > 0
         a, b, p = params(d)
         (((a / b)^(p / 2)) / (2 * besselk(p, sqrt(a * b)))) * (x^(p - 1)) * exp(- (a * x + b / x) / 2)
@@ -80,7 +61,7 @@ function pdf{T<:Real}(d::GeneralizedInverseGaussian{T}, x::Real)
     end
 end
 
-function logpdf{T<:Real}(d::GeneralizedInverseGaussian{T}, x::Real)
+function logpdf(d::GeneralizedInverseGaussian{T}, x::Real) where {T <: Real}
     if x > 0
         a, b, p = params(d)
         (p / 2) * (log(a) - log(b)) - log(2 * besselk(p, sqrt(a * b))) + (p - 1) * log(x) - (a * x + b / x) / 2
@@ -90,7 +71,7 @@ function logpdf{T<:Real}(d::GeneralizedInverseGaussian{T}, x::Real)
 end
 
 
-function cdf{T<:Real}(d::GeneralizedInverseGaussian{T}, x::Real)
+function cdf(d::GeneralizedInverseGaussian{T}, x::Real) where {T <: Real}
     if x > 0
         # See eq. (5) in Lemonte & Cordeiro (2011) 
         # Statistics & Probability Letters 81:506–517
@@ -136,7 +117,7 @@ function cdf{T<:Real}(d::GeneralizedInverseGaussian{T}, x::Real)
     end
 end
 
-function mgf{T <: Real}(d::GeneralizedInverseGaussian{T}, t::Real)
+function mgf(d::GeneralizedInverseGaussian{T}, t::Real) where {T <: Real}
     if t == zero(t)
         one(T)
     else
@@ -145,7 +126,7 @@ function mgf{T <: Real}(d::GeneralizedInverseGaussian{T}, t::Real)
     end
 end
 
-function cf{T <: Real}(d::GeneralizedInverseGaussian{T}, t::Real)
+function cf(d::GeneralizedInverseGaussian{T}, t::Real) where {T <: Real}
     if t == zero(t)
         one(T) + zero(T) * im
     else
