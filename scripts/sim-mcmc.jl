@@ -1,8 +1,11 @@
+push!(LOAD_PATH, "/Users/neal/Projects/mimix/src")
+
 using ArgParse
 using CSV
 using DataFrames
 using Mamba
 using MicrobiomeMixedModels
+using Random
 using YAML
 
 function parse_commandline()
@@ -64,7 +67,7 @@ end
 
 function generate_data(;
     N::Int=40, K::Int=100, L::Int=-1, q::Int=5, m_min::Int=2500, m_max::Int=5000,
-    μ::Vector=collect(linspace(1, -1, K)), block_cor::Float64=0.9, error_cor::Float64=0.9,
+    μ::Vector=collect(range(1, stop=-1, length=K)), block_cor::Float64=0.9, error_cor::Float64=0.9,
     dense::Float64=0.1, block_var::Float64=1.0, error_var::Float64=1.0,
     a_support::Vector{Float64}=collect(0.01:0.01:0.5), seed::Int=1)
 
@@ -72,7 +75,7 @@ function generate_data(;
     @assert iseven(N)
     @assert N % q == 0
 
-    srand(seed)
+    Random.seed!(seed)
 
     # Fixed effects due to single treatment
     X = transpose([ones(div(N, 2))... zeros(div(N, 2))...])
@@ -100,7 +103,7 @@ function generate_data(;
 
     # Multivariate count data
     e = exp.(θ)
-    ϕ = e ./ sum(e, 2)
+    ϕ = e ./ sum(e, dims=2)
     m = sample(m_min:m_max, N)
     Y = zeros(Int, (N, K))
     for i in 1:N
@@ -127,7 +130,7 @@ function generate_data(;
     data[:num_blocking_factors] = size(Z, 2)
     data[:blocking_factor] = Dict{Int, Int}()
     for level in unique(Z)
-        bf = find(any(Z .== level, 1))
+        bf = findall(vec(any(Z .== level, dims=1)))
         @assert length(bf) == 1
         data[:blocking_factor][level] = bf[1]
     end
@@ -191,13 +194,13 @@ else  # mimix
     inits = [inits for _ in 1:args["chains"]]
 
     println("Beginning MCMC simulation")
-    srand(args["seed"])
+    Random.seed!(args["seed"])
     mcmc_kwargs = Dict(Symbol(key) => args[key] for key in ["burnin", "thin", "chains"])
     sim = mcmc(model, data, inits, args["iters"]; mcmc_kwargs...)
 
     # summarize global test results
     sim_omega = sim[:, [startswith(name, 'ω') for name in sim.names], :].value
-    num_included_each_iter = sum(sim_omega, 2)
+    num_included_each_iter = sum(sim_omega, dims=2)
     post_prob_inclusion = mean(num_included_each_iter .> 0.0)
     global_results = DataFrame(
         reject_global_null = post_prob_inclusion > 0.9,
@@ -221,9 +224,9 @@ else  # mimix
             if startswith(name, String(node))
                 push!(nodes, node)
                 if '[' in name
-                    index = name[search(name, '['):end]
+                    index = name[collect(findfirst("[", name))[1]:end]
                     index = strip(index, ['[', ']'])
-                    index = parse.(split(index, ','))
+                    index = parse.(Int, split(index, ','))
                     push!(vals, value[index...])
                 else
                     push!(vals, value)

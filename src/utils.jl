@@ -1,6 +1,6 @@
 
 function squeezesum(A, dim)
-    squeeze(sum(A, dim), dim)
+    dropdims(sum(A, dims=dim), dims=dim)
 end
 
 function boundbelow!(x, tol=1e-10)
@@ -12,24 +12,24 @@ function boundbelow!(x, tol=1e-10)
 end
 
 function proportionalize(Y::Matrix, tol=1e-10)
-    ϕ = Y ./ sum(Y, 2)
+    ϕ = Y ./ sum(Y, dims=2)
     for i in eachindex(ϕ)
         if ϕ[i] < tol
             ϕ[i] = tol
         end
     end
-    ϕ ./ sum(ϕ, 2)
+    ϕ ./ sum(ϕ, dims=2)
 end
 
 function clr(θ)
     x = exp.(θ)
-    S = sum(x, 2)
+    S = sum(x, dims=2)
     x ./ S
 end
 
 function iclr(ϕ)
     x = log.(ϕ)
-    x .- mean(x, 2)
+    x .- mean(x, dims=2)
 end
 
 function logfgrad(θ, θ_mean, θ_var, y, m)
@@ -53,7 +53,7 @@ function get_post(sim, data, param)
         :θ => ["θ[$i, $k]" for i in 1:N, k in 1:K],
         :θ_mean => ["θ_mean[$k]" for k in 1:K],
         :θ_var => ["θ_var[$k]" for k in 1:K],
-        :μ => ["μ[k]" for k in 1:K],
+        :μ => ["μ[$k]" for k in 1:K],
         :μ_var => ["μ_var"],
         :β => ["β[$k, $j]" for k in 1:K, j in 1:p],
         :β_full => [],
@@ -89,7 +89,7 @@ function parse_config(conf)
         param = key
         for (name, letter) in greek
             if startswith(param, name)
-                param = replace(param, name, letter)
+                param = replace(param, name => letter)
             end
         end
         parsed_conf[Symbol(param)] = conf[key]

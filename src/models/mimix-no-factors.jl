@@ -11,8 +11,8 @@ function get_inits(::MIMIXNoFactors, params::Dict{Symbol, Any}, data::Dict{Symbo
     inits = Dict{Symbol, Any}(
         :Y => data[:Y],
         :θ => θ_init,
-        :θ_var => vec(var(θ_init, 1)),
-        :μ => vec(mean(θ_init, 1)),
+        :θ_var => vec(var(θ_init, dims=1)),
+        :μ => vec(mean(θ_init, dims=1)),
         :μ_var => params[:μ_var],
         :ω => ω_init,
         :π => π_init,
@@ -169,7 +169,7 @@ function get_model(::MIMIXNoFactors, monitor::Dict{Symbol, Any}, hyper::Dict{Sym
         Sampler(:μ, (θ, θ_var, μ, μ_var, Xβ, sumZγ, N, K) ->
             begin
                 Sigma = 1 ./ (N ./ θ_var .+ 1 / μ_var)
-                mu = Sigma .* vec(sum(θ - Xβ - sumZγ, 1)) ./ θ_var
+                mu = Sigma .* vec(sum(θ - Xβ - sumZγ, dims=1)) ./ θ_var
                 for k in 1:K
                     μ[k] = rand(Normal(mu[k], sqrt(Sigma[k])))
                 end
@@ -185,7 +185,7 @@ function get_model(::MIMIXNoFactors, monitor::Dict{Symbol, Any}, hyper::Dict{Sym
                     A += transpose(γ[:, z])
                     for r in unique(z)
                         in_block = z .== r
-                        B = vec(sum(A[in_block, :], 1))
+                        B = vec(sum(A[in_block, :], dims=1))
                         Sigma = 1 ./ (sum(in_block) ./ θ_var .+ 1 / γ_var[j])
                         mu = Sigma .* B ./ θ_var
                         for k in 1:K
@@ -202,10 +202,10 @@ function get_model(::MIMIXNoFactors, monitor::Dict{Symbol, Any}, hyper::Dict{Sym
             begin
                 A = θ - sumZγ .- transpose(μ)
                 for k in 1:K
-                    Xtilde = X * diagm(ω[k, :])
-                    Sigma = inv(transpose(Xtilde) * Xtilde ./ θ_var[k] + diagm(1 ./ β_var))
+                    Xtilde = X * Diagonal(ω[k, :])
+                    Sigma = inv(transpose(Xtilde) * Xtilde ./ θ_var[k] + Diagonal(1 ./ β_var))
                     mu = Sigma * ((transpose(Xtilde) * A[:, k]) ./ θ_var[k])
-                    β_full[k, :] = rand(MvNormal(mu, Hermitian(Sigma)))
+                    β_full[k, :] = rand(MvNormal(mu, Sigma))
                 end
                 β_full
             end
@@ -233,7 +233,7 @@ function get_model(::MIMIXNoFactors, monitor::Dict{Symbol, Any}, hyper::Dict{Sym
 
         Sampler(:π, (π, ω, K, p) ->
             begin
-                S = vec(sum(ω, 1))
+                S = vec(sum(ω, dims=1))
                 c0, d0 = params(π.distr)
                 c = c0 .+ S
                 d = d0 + K .- S
@@ -254,7 +254,7 @@ function get_model(::MIMIXNoFactors, monitor::Dict{Symbol, Any}, hyper::Dict{Sym
                 num_blocking_factor = length(γ_var)
                 u = fill(shape(γ_var.distr), num_blocking_factor)
                 v = fill(scale(γ_var.distr), num_blocking_factor)
-                G = sum(abs2, γ, 1)
+                G = sum(abs2, γ, dims=1)
                 for r in 1:q
                     u[blocking_factor[r]] += 0.5K
                     v[blocking_factor[r]] += 0.5G[r]
@@ -268,8 +268,8 @@ function get_model(::MIMIXNoFactors, monitor::Dict{Symbol, Any}, hyper::Dict{Sym
 
         Sampler(:β_var, (β, β_var, ω, p) ->
             begin
-                u = 0.5vec(sum(ω, 1)) .+ shape(β_var.distr)
-                v = 0.5vec(sum(abs2, β, 1)) .+ scale(β_var.distr)
+                u = 0.5vec(sum(ω, dims=1)) .+ shape(β_var.distr)
+                v = 0.5vec(sum(abs2, β, dims=1)) .+ scale(β_var.distr)
                 [rand(InverseGamma(u[j], v[j])) for j in 1:p]
             end
         ),
@@ -277,7 +277,7 @@ function get_model(::MIMIXNoFactors, monitor::Dict{Symbol, Any}, hyper::Dict{Sym
         Sampler(:θ_var, (θ, θ_mean, θ_var, N, K) ->
             begin
                 u = 0.5N + shape(θ_var.distr)
-                v = 0.5vec(sum(abs2, θ - θ_mean, 1)) .+ scale(θ_var.distr)
+                v = 0.5vec(sum(abs2, θ - θ_mean, dims=1)) .+ scale(θ_var.distr)
                 [rand(InverseGamma(u, v[k])) for k in 1:K]
             end
         )

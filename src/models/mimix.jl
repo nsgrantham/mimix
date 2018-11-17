@@ -11,14 +11,14 @@ function get_inits(::MIMIX, params::Dict{Symbol, Any}, data::Dict{Symbol, Any})
     inits = Dict{Symbol, Any}(
         :Y => data[:Y],
         :θ => θ_init,
-        :θ_var => vec(var(θ_init, 1)),
-        :μ => vec(mean(θ_init, 1)),
+        :θ_var => vec(var(θ_init, dims=1)),
+        :μ => vec(mean(θ_init, dims=1)),
         :μ_var => params[:μ_var],
         #:β_full => β_init,
         #:γ => γ_init,
         #:β_var => β_var_init,
         #:γ_var => γ_var_init,
-        :Λ => eye(data[:L], data[:K]),
+        :Λ => Matrix(1.0I, data[:L], data[:K]),
         :F => zeros(data[:N], data[:L]),
         :ψ => ones(data[:L], data[:K]),
         :ξ => ones(data[:L], data[:K]),
@@ -266,7 +266,7 @@ function get_model(::MIMIX, monitor::Dict{Symbol, Any}, hyper::Dict{Symbol, Any}
         Sampler(:μ, (θ, θ_var, μ, μ_var, ΛF, N, K) ->
             begin
                 Sigma = 1 ./ (N ./ θ_var .+ 1 / μ_var)
-                mu = Sigma .* vec(sum(θ - ΛF, 1)) ./ θ_var
+                mu = Sigma .* vec(sum(θ - ΛF, dims=1)) ./ θ_var
                 for k in 1:K
                     μ[k] = rand(Normal(mu[k], sqrt(Sigma[k])))
                 end
@@ -280,8 +280,8 @@ function get_model(::MIMIX, monitor::Dict{Symbol, Any}, hyper::Dict{Symbol, Any}
                 B = (transpose(F) * (θ .- transpose(μ))) ./ transpose(θ_var)
                 Sigma = zeros(L, L)
                 for k in 1:K
-                    Sigma[:, :] = inv(cholfact(Hermitian(spdiagm(1 ./ λ_var[:, k]) + FtF ./ θ_var[k])))
-                    Λ[:, k] = rand(MvNormal(Sigma * B[:, k], Hermitian(Sigma)))
+                    Sigma[:, :] = inv(cholesky(Hermitian(Diagonal(1 ./ λ_var[:, k]) + FtF ./ θ_var[k])))
+                    Λ[:, k] = rand(MvNormal(Sigma * B[:, k], Sigma))
                 end
                 Λ
             end
@@ -310,14 +310,14 @@ function get_model(::MIMIX, monitor::Dict{Symbol, Any}, hyper::Dict{Symbol, Any}
                         T[l, k] = rand(GeneralizedInverseGaussian(2ν, M[l, k], a[l] - 1))
                     end
                 end
-                ξ = T ./ sum(T, 2)
+                ξ = T ./ sum(T, dims=2)
                 ξ
             end
         ),
 
         Sampler(:τ, (τ, ξ, Λ, a, ν, L, K) ->
             begin
-                S = 2vec(sum(abs.(Λ) ./ ξ, 2))
+                S = 2vec(sum(abs.(Λ) ./ ξ, dims=2))
                 for l in 1:L
                     τ[l] = rand(GeneralizedInverseGaussian(2ν, S[l], K * a[l] - K))
                 end
@@ -379,7 +379,7 @@ function get_model(::MIMIX, monitor::Dict{Symbol, Any}, hyper::Dict{Symbol, Any}
             begin
                 dir = [Dirichlet(fill(a, K)) for a in a_support]
                 gam = [Gamma(K * a, 1 / ν) for a in a_support]
-                lp = zeros(a_support)
+                lp = zeros(length(a_support))
                 for l in 1:L
                     xi = ξ[l, :]
                     tau = τ[l]
@@ -396,10 +396,10 @@ function get_model(::MIMIX, monitor::Dict{Symbol, Any}, hyper::Dict{Symbol, Any}
         Sampler(:F, (θ, θ_var, μ, Λ, F, F_mean, b_var, L, N) ->
             begin
                 A = transpose(Λ) ./ θ_var
-                Sigma = inv(Λ * A + speye(L))
+                Sigma = inv(cholesky(Hermitian(Λ * A + Matrix(1.0I, L, L))))
                 mu = Sigma * transpose((θ .- transpose(μ)) * A + F_mean)
                 for i in 1:N
-                    F[i, :] = rand(MvNormal(mu[:, i], Hermitian(Sigma)))
+                    F[i, :] = rand(MvNormal(mu[:, i], Sigma))
                 end
                 F
             end
@@ -413,7 +413,7 @@ function get_model(::MIMIX, monitor::Dict{Symbol, Any}, hyper::Dict{Symbol, Any}
                     A += transpose(g[:, z])
                     for r in unique(z)
                         in_block = z .== r
-                        B = vec(sum(A[in_block, :], 1))
+                        B = vec(sum(A[in_block, :], dims=1))
                         Sigma = 1 / (sum(in_block) + 1 / g_var[j])
                         mu = Sigma .* B
                         for l in 1:L
@@ -430,10 +430,10 @@ function get_model(::MIMIX, monitor::Dict{Symbol, Any}, hyper::Dict{Symbol, Any}
             begin
                 A = F - sumZg
                 for l in 1:L
-                    Xtilde = X * diagm(ω[l, :])
-                    Sigma = inv(transpose(Xtilde) * Xtilde + diagm(1 ./ b_var))
+                    Xtilde = X * Diagonal(ω[l, :])
+                    Sigma = inv(cholesky(Hermitian(transpose(Xtilde) * Xtilde + Diagonal(1 ./ b_var))))
                     mu = Sigma * (transpose(Xtilde) * A[:, l])
-                    b_full[l, :] = rand(MvNormal(mu, Hermitian(Sigma)))
+                    b_full[l, :] = rand(MvNormal(mu, Sigma))
                 end
                 b_full
             end
@@ -461,7 +461,7 @@ function get_model(::MIMIX, monitor::Dict{Symbol, Any}, hyper::Dict{Symbol, Any}
 
         Sampler(:π, (π, ω, L, p) ->
             begin
-                S = vec(sum(ω, 1))
+                S = vec(sum(ω, dims=1))
                 c0, d0 = params(π.distr)
                 c = c0 .+ S
                 d = d0 + L .- S
@@ -485,7 +485,7 @@ function get_model(::MIMIX, monitor::Dict{Symbol, Any}, hyper::Dict{Symbol, Any}
                 num_blocking_factor = length(g_var)
                 u = fill(shape(g_var.distr), num_blocking_factor)
                 v = fill(scale(g_var.distr), num_blocking_factor)
-                G = sum(abs2, g, 1)
+                G = sum(abs2, g, dims=1)
                 for r in 1:q
                     u[blocking_factor[r]] += 0.5L
                     v[blocking_factor[r]] += 0.5G[r]
@@ -499,8 +499,8 @@ function get_model(::MIMIX, monitor::Dict{Symbol, Any}, hyper::Dict{Symbol, Any}
 
         Sampler(:b_var, (b, b_var, ω, p) ->
             begin
-                u = 0.5vec(sum(ω, 1)) .+ shape(b_var.distr)
-                v = 0.5vec(sum(abs2, b, 1)) .+ scale(b_var.distr)
+                u = 0.5vec(sum(ω, dims=1)) .+ shape(b_var.distr)
+                v = 0.5vec(sum(abs2, b, dims=1)) .+ scale(b_var.distr)
                 for j in 1:p
                     b_var[j] = rand(InverseGamma(u[j], v[j]))
                 end
@@ -511,7 +511,7 @@ function get_model(::MIMIX, monitor::Dict{Symbol, Any}, hyper::Dict{Symbol, Any}
         Sampler(:θ_var, (θ, θ_mean, θ_var, N, K) ->
             begin
                 u = 0.5N + shape(θ_var.distr)
-                v = 0.5vec(sum(abs2, θ - θ_mean, 1)) .+ scale(θ_var.distr)
+                v = 0.5vec(sum(abs2, θ - θ_mean, dims=1)) .+ scale(θ_var.distr)
                 for k in 1:K
                     θ_var[k] = rand(InverseGamma(u, v[k]))
                 end

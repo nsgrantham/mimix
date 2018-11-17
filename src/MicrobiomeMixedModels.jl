@@ -2,6 +2,7 @@ module MicrobiomeMixedModels
 
 using Mamba
 using Distributions
+using LinearAlgebra
 using YAML
 using RCall
 

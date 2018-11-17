@@ -1,8 +1,12 @@
+push!(LOAD_PATH, "/Users/neal/Projects/mimix/src")
+
 using ArgParse
 using CSV
 using DataFrames
+using DelimitedFiles
 using Mamba
 using MicrobiomeMixedModels
+using Random
 using YAML
 
 function parse_commandline()
@@ -30,6 +34,7 @@ function parse_commandline()
             help = "Number of MCMC chains to run."
         "--seed"
             arg_type = Int
+            default = 1
             help = "Reseed the random number generator."
         "--monitor"
             help = "YAML defining the nodes to monitor through MCMC."
@@ -53,13 +58,13 @@ end
 
 function read_data(dir; L=0)
     println("Reading X.csv")
-    X = readcsv(joinpath(dir, "X.csv"), Int)
+    X = DelimitedFiles.readcsv(joinpath(dir, "X.csv"), Int)
     println("Reading Y.csv")
-    Y = readcsv(joinpath(dir, "Y.csv"), Int)
+    Y = DelimitedFiles.readcsv(joinpath(dir, "Y.csv"), Int)
     println("Reading Z.csv")
-    Z = readcsv(joinpath(dir, "Z.csv"), Int)
+    Z = DelimitesFiles.readcsv(joinpath(dir, "Z.csv"), Int)
     N, K = size(Y)
-    m = sum(Y, 2)
+    m = sum(Y, dims=2)
     q = maximum(vec(Z))
     data = Dict{Symbol, Any}(
         :X => X,
@@ -75,7 +80,7 @@ function read_data(dir; L=0)
     data[:num_blocking_factors] = size(Z, 2)
     data[:blocking_factor] = Dict{Int, Int}()
     for level in unique(Z)
-        bf = find(any(Z .== level, 1))
+        bf = findall(vec(any(Z .== level, 1)))
         @assert length(bf) == 1
         data[:blocking_factor][level] = bf[1]
     end
@@ -90,9 +95,7 @@ input = abspath(args["input"])
 
 output = abspath(args["output"])
 
-if args["seed"]
-    srand(args["seed"])
-end
+Random.seed!(args["seed"])
 
 if args["permanova"]
     data = read_data(input)
@@ -145,7 +148,7 @@ else  # mimix
             param = String(param)
             for (letter, name) in MicrobiomeMixedModels.latin
                 if startswith(param, letter)
-                    param = replace(param, letter, name)
+                    param = replace(param, letter => name)
                 end
             end
             post_path = joinpath(output, "$param.tsv")
@@ -158,7 +161,7 @@ else  # mimix
         # Lambda is large, so rather than save every sample we save the posterior mean
         Λ = get_post(sim, data, :Λ)
         Λ_values = convert(Matrix, Λ)
-        Λ_postmean = reshape(vec(mean(Λ_values, 1)), data[:L], data[:K])
+        Λ_postmean = reshape(vec(mean(Λ_values, dims=1)), data[:L], data[:K])
         post_path = joinpath(output, "Lambda-postmean.tsv")
         println("Saving posterior mean of Lambda to $post_path")
         writedlm(post_path, Λ_postmean)
@@ -178,10 +181,10 @@ else  # mimix
 
     if args["post-pred-check"]
         # Posterior predictive checks
-        obs_max_count = vec(maximum(data[:Y], 2) ./ sum(data[:Y], 2))
-        obs_prop_eq_zero = vec(mean(data[:Y] .== 0.0, 2))
-        obs_prop_leq_one = vec(mean(data[:Y] .<= 1.0, 2))
-        obs_prop_leq_two = vec(mean(data[:Y] .<= 2.0, 2))
+        obs_max_count = vec(maximum(data[:Y], dims=2) ./ sum(data[:Y], dims=2))
+        obs_prop_eq_zero = vec(mean(data[:Y] .== 0.0, dims=2))
+        obs_prop_leq_one = vec(mean(data[:Y] .<= 1.0, dims=2))
+        obs_prop_leq_two = vec(mean(data[:Y] .<= 2.0, dims=2))
         writedlm(joinpath(output, "obs-max-count.tsv"), obs_max_count)
         writedlm(joinpath(output, "obs-prop-eq-zero.tsv"), obs_prop_eq_zero)
         writedlm(joinpath(output, "obs-prop-leq-one.tsv"), obs_prop_leq_one)
@@ -201,10 +204,10 @@ else  # mimix
         for i in 1:n_iter
             ϕ[:, :] = clr(reshape(θ_post[i, :], data[:N], data[:K]))
             Y_pred_iter[:, :] = hcat([rand(Multinomial(data[:m][i], ϕ[i, :])) for i in 1:data[:N]]...)'
-            max_count[i, :] = vec(maximum(Y_pred_iter, 2) ./ sum(Y_pred_iter, 2))
-            prop_eq_zero[i, :] = vec(mean(Y_pred_iter .== 0.0, 2))
-            prop_leq_one[i, :] = vec(mean(Y_pred_iter .<= 1.0, 2))
-            prop_leq_two[i, :] = vec(mean(Y_pred_iter .<= 2.0, 2))
+            max_count[i, :] = vec(maximum(Y_pred_iter, dims=2) ./ sum(Y_pred_iter, dims=2))
+            prop_eq_zero[i, :] = vec(mean(Y_pred_iter .== 0.0, dims=2))
+            prop_leq_one[i, :] = vec(mean(Y_pred_iter .<= 1.0, dims=2))
+            prop_leq_two[i, :] = vec(mean(Y_pred_iter .<= 2.0, dims=2))
         end
 
         writedlm(joinpath(output, "post-pred-max-count.tsv"), max_count)
