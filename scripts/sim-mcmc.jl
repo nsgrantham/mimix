@@ -46,6 +46,9 @@ function parse_commandline()
             arg_type = Int
             default = 0
             help = "Number of factors to use in fitting the MIMIX model."
+        "--loadings"
+            default = "DL"
+            help = "Distributions on loadings (G for Gaussian priors, DL for Dirichlet-Laplace priors)."
         "--permanova"
             help = "Run PERMANOVA with vegan::adonis() in R."
             action = :store_true
@@ -182,8 +185,11 @@ else  # mimix
     @assert 0 < args["chains"]  "Chains must be positive"
 
     factors = args["factors"]
-    if factors > 0
+    loadings = args["loadings"]
+    if (factors > 0) & (loadings == "DL")
         model_type = MIMIX(factors)
+    elseif (factors > 0) & (loadings == "G")
+        model_type = MIMIXGaussian(factors)
     elseif factors == 0
         model_type = MIMIXNoFactors()
     else

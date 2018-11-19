@@ -24,6 +24,7 @@ export
     logpdf,
     rand,
     MIMIX,
+    MIMIXGaussian,
     MIMIXNoFactors,
     permanova,
     fit,
@@ -45,10 +46,19 @@ struct MIMIX <: MicrobiomeModel
     end
 end
 
+struct MIMIXGaussian <: MicrobiomeModel
+    factors::Int
+    function MIMIXGaussian(factors::Int)
+        @assert factors > zero(factors)
+        new(factors)
+    end
+end
+
 struct MIMIXNoFactors <: MicrobiomeModel end
 
 include("generalized-inverse-gaussian.jl")  # distribution used in MIMIX
 include(joinpath("models", "mimix.jl"))
+include(joinpath("models", "mimix-gaussian.jl"))
 include(joinpath("models", "mimix-no-factors.jl"))
 include(joinpath("models", "permanova.jl"))
 include("utils.jl")
