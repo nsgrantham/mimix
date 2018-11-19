@@ -68,7 +68,7 @@ end
 function generate_data(;
     N::Int=40, K::Int=100, L::Int=-1, q::Int=5, m_min::Int=2500, m_max::Int=5000,
     μ::Vector=collect(range(1, stop=-1, length=K)), block_cor::Float64=0.9, error_cor::Float64=0.9,
-    dense::Float64=0.1, block_var::Float64=1.0, error_var::Float64=1.0,
+    form::String="grouped", dense::Float64=0.1, block_var::Float64=1.0, error_var::Float64=1.0,
     a_support::Vector{Float64}=collect(0.01:0.01:0.5), seed::Int=1)
 
     @assert length(μ) == K
@@ -80,12 +80,22 @@ function generate_data(;
     # Fixed effects due to single treatment
     X = transpose([ones(div(N, 2))... zeros(div(N, 2))...])
     β = zeros(K)
-    ngroup = round(Int64, dense / 0.05)
-    group = shuffle(collect(1:5:K))[1:ngroup]
-    for g in group
-        v = rand(Uniform(-2, 2))
-        v += 1.0sign(v)
-        for i in g:min(g + 4, K)
+    if form == "grouped"
+        ngroup = round(Int64, dense / 0.05)
+        group = shuffle(collect(1:5:K))[1:ngroup]
+        for g in group
+            v = rand(Uniform(-2, 2))
+            v += 1.0sign(v)
+            for i in g:min(g + 4, K)
+                β[i] = v
+            end
+        end
+    elseif form == "random"
+        nindividual = round(Int64, dense * K)
+        individual = shuffle(collect(1:K))[1:nindividual]
+        for i in individual
+            v = rand(Uniform(-2, 2))
+            v += 1.0sign(v)
             β[i] = v
         end
     end
