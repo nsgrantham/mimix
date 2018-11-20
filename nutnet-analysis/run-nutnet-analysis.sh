@@ -37,7 +37,7 @@ julia scripts/fit-mcmc.jl \
 
 mkdir -p "$OUTPUT_DIR"/mimix
 julia scripts/fit-mcmc.jl \
-   --hyper nutnet-analysis/configs/hyper.yml \
+   --hyper nutnet-analysis/configs/hyper.yml nutnet-analysis-configs/nu-hyper-1.yml\
    --inits nutnet-analysis/configs/inits.yml \
    --monitor nutnet-analysis/configs/monitor-mimix.yml \
    --post-pred-check \
@@ -49,4 +49,4 @@ julia scripts/fit-mcmc.jl \
    "$DATA_DIR" \
    "$OUTPUT_DIR"/mimix
 
-Rscript nutnet-analysis/summarize-results.R "$OUTPUT_DIR" "$OUTPUT_DIR" "$DATA_DIR"
+Rscript nutnet-analysis/summarize-nutnet-analysis.R "$OUTPUT_DIR" "$OUTPUT_DIR" "$DATA_DIR"

@@ -37,10 +37,13 @@ function parse_commandline()
             nargs = '*'
             help = "YAML defining the settings for artificial data generation."
         "--monitor"
+            nargs = '*'
             help = "YAML defining the nodes to monitor through MCMC."
         "--inits"
+            nargs = '*'
             help = "YAML defining initial values of stochastic nodes."
         "--hyper"
+            nargs = '*'
             help = "YAML defining hyperparameters of stochastic node priors."
         "--factors"
             arg_type = Int
@@ -196,10 +199,10 @@ else  # mimix
         ValueError("--factors requires a non-negative integer.")
     end
 
-    monitor_conf = load_config(abspath(args["monitor"]))
-    hyper_conf = load_config(abspath(args["hyper"]))
+    monitor_conf = load_config(AbstractString[abspath(data_path) for data_path in args["monitor"]])
+    hyper_conf = load_config(AbstractString[abspath(data_path) for data_path in args["hyper"]])
     data_conf = load_config(AbstractString[abspath(data_path) for data_path in args["data"]])
-    inits_conf = load_config(abspath(args["inits"]))
+    inits_conf = load_config(AbstractString[abspath(data_path) for data_path in args["inits"]])
 
     model = get_model(model_type, monitor_conf, hyper_conf)
 

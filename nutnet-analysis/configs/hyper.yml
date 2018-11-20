@@ -8,6 +8,6 @@ a_start: 0.01
 a_by: 0.01
 a_end: 0.5
 
-# Hyperparams of nu
+# Hyperparams for nu
 c0: 1
 d0: 1
