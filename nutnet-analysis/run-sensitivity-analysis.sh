@@ -23,7 +23,7 @@ mimix () {
     echo -e "Sensitivity analysis: running with nu hyperparameters defined in $configs_dir/$1"
     results_dir=$OUTPUT_DIR/$(basename "$1" .yml)
     mkdir -p $results_dir
-    /Applications/Julia-1.0.app/Contents/Resources/julia/bin/julia scripts/fit-mcmc.jl \
+    julia scripts/fit-mcmc.jl \
         --hyper nutnet-analysis/configs/hyper.yml $configs_dir/$1 \
         --inits nutnet-analysis/configs/inits.yml \
         --monitor nutnet-analysis/configs/monitor-mimix.yml \
