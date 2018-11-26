@@ -15,7 +15,7 @@ function get_inits(::MIMIXGaussian, params::Dict{Symbol, Any}, data::Dict{Symbol
         :μ => vec(mean(θ_init, dims=1)),
         :μ_var => params[:μ_var],
         :Λ => Matrix(1.0I, data[:L], data[:K]),
-        :λ_var => ones(data[:L], data[:K]),
+        :λ_var => ones(data[:L]),
         :F => zeros(data[:N], data[:L]),
         :b_full => b_init,
         :g => g_init,
@@ -90,13 +90,13 @@ function get_model(::MIMIXGaussian, monitor::Dict{Symbol, Any}, hyper::Dict{Symb
         ),
 
         Λ = Stochastic(2,
-            (L, K, λ_var) -> MultivariateDistribution[
-                MvNormal(zeros(K), sqrt.(λ_var[l, :])) for l in 1:L
+            (λ_var, L, K) -> MultivariateDistribution[
+                MvNormal(zeros(K), sqrt(λ_var[l])) for l in 1:L
             ],
             monitor[:Λ]
         ),
 
-        λ_var = Stochastic(2,
+        λ_var = Stochastic(1,
             () -> InverseGamma(1, 1),
             monitor[:λ_var]
         ),
@@ -225,7 +225,7 @@ function get_model(::MIMIXGaussian, monitor::Dict{Symbol, Any}, hyper::Dict{Symb
                 B = (transpose(F) * (θ .- transpose(μ))) ./ transpose(θ_var)
                 Sigma = zeros(L, L)
                 for k in 1:K
-                    Sigma[:, :] = inv(cholesky(Hermitian(Diagonal(1 ./ λ_var[:, k]) + FtF ./ θ_var[k])))
+                    Sigma[:, :] = inv(cholesky(Hermitian(Diagonal(1 ./ λ_var) + FtF ./ θ_var[k])))
                     Λ[:, k] = rand(MvNormal(Sigma * B[:, k], Sigma))
                 end
                 Λ
@@ -356,7 +356,15 @@ function get_model(::MIMIXGaussian, monitor::Dict{Symbol, Any}, hyper::Dict{Symb
                 end
                 θ_var
             end
-        )
+        ),
+
+        Sampler(:λ_var, (λ_var, Λ, K, L) ->
+        begin
+            u = 0.5K + shape(λ_var.distr)
+            v = 0.5vec(sum(abs2, Λ, dims=2)) .+ scale(λ_var.distr)
+            [rand(InverseGamma(u, v[l])) for l in 1:L]
+        end
+    )
     ]
 
     setsamplers!(model, samplers)
