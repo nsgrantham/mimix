@@ -135,6 +135,10 @@ else  # mimix
     hyper_conf = load_config(AbstractString[abspath(data_path) for data_path in args["hyper"]])
     inits_conf = load_config(AbstractString[abspath(data_path) for data_path in args["inits"]])
 
+    if args["post-pred-check"] & !monitor_conf[:θ]
+        error("Posterior prediction checks require monitoring theta; please alter the monitor config such that 'theta: true'")
+    end
+
     model = get_model(model_type, monitor_conf, hyper_conf)
 
     data = read_data(input; L = factors)
@@ -189,39 +193,59 @@ else  # mimix
     end
 
     if args["post-pred-check"]
-        # Posterior predictive checks
+        # Posterior predictive checks on sparsity, overdispersion, and alpha diversity
+
+        function shannon_diversity(x::Vector{T}) where T <: Real
+            p = x ./ sum(x)
+            p = p[p .> 0.]
+            return -sum(p .* log.(p))
+        end
+        
+        function simpson_diversity(x::Vector{T}) where T <: Real
+            p = x ./ sum(x)
+            return sum(abs2, p)
+        end
+
         obs_max_count = vec(maximum(data[:Y], dims=2) ./ sum(data[:Y], dims=2))
         obs_prop_eq_zero = vec(mean(data[:Y] .== 0.0, dims=2))
         obs_prop_leq_one = vec(mean(data[:Y] .<= 1.0, dims=2))
         obs_prop_leq_two = vec(mean(data[:Y] .<= 2.0, dims=2))
+        obs_shannon_div = mapslices(shannon_diversity, data[:Y], dims=2)
+        obs_simpson_div = mapslices(simpson_diversity, data[:Y], dims=2)
         writedlm(joinpath(output, "obs-max-count.tsv"), obs_max_count)
         writedlm(joinpath(output, "obs-prop-eq-zero.tsv"), obs_prop_eq_zero)
         writedlm(joinpath(output, "obs-prop-leq-one.tsv"), obs_prop_leq_one)
         writedlm(joinpath(output, "obs-prop-leq-two.tsv"), obs_prop_leq_two)
+        writedlm(joinpath(output, "obs-shannon-div.tsv"), obs_shannon_div)
+        writedlm(joinpath(output, "obs-simpson-div.tsv"), obs_simpson_div)
 
         if monitor_θ
             θ_post = convert(Matrix, get_post(sim, data, :θ))
         end
 
-        ϕ = zeros(data[:N], data[:K])
-        Y_pred_iter = zeros(data[:N], data[:K])
         n_iter = size(θ_post, 1)
         max_count = zeros(n_iter, data[:N])
         prop_eq_zero = zeros(n_iter, data[:N])
         prop_leq_one = zeros(n_iter, data[:N])
         prop_leq_two = zeros(n_iter, data[:N])
-        for i in 1:n_iter
-            ϕ[:, :] = clr(reshape(θ_post[i, :], data[:N], data[:K]))
-            Y_pred_iter[:, :] = hcat([rand(Multinomial(data[:m][i], ϕ[i, :])) for i in 1:data[:N]]...)'
-            max_count[i, :] = vec(maximum(Y_pred_iter, dims=2) ./ sum(Y_pred_iter, dims=2))
-            prop_eq_zero[i, :] = vec(mean(Y_pred_iter .== 0.0, dims=2))
-            prop_leq_one[i, :] = vec(mean(Y_pred_iter .<= 1.0, dims=2))
-            prop_leq_two[i, :] = vec(mean(Y_pred_iter .<= 2.0, dims=2))
+        shannon_div = zeros(n_iter, data[:N])
+        simpson_div = zeros(n_iter, data[:N])
+        for iter in 1:n_iter
+            ϕ = clr(reshape(θ_post[iter, :], data[:N], data[:K]))
+            Y_pred_iter = hcat([rand(Multinomial(data[:m][i], ϕ[i, :])) for i in 1:data[:N]]...)'
+            max_count[iter, :] = vec(maximum(Y_pred_iter, dims=2) ./ sum(Y_pred_iter, dims=2))
+            prop_eq_zero[iter, :] = vec(mean(Y_pred_iter .== 0.0, dims=2))
+            prop_leq_one[iter, :] = vec(mean(Y_pred_iter .<= 1.0, dims=2))
+            prop_leq_two[iter, :] = vec(mean(Y_pred_iter .<= 2.0, dims=2))
+            shannon_div[iter, :] = mapslices(shannon_diversity, Y_pred_iter, dims=2)
+            simpson_div[iter, :] = mapslices(simpson_diversity, Y_pred_iter, dims=2)
         end
 
         writedlm(joinpath(output, "post-pred-max-count.tsv"), max_count)
         writedlm(joinpath(output, "post-pred-prop-eq-zero.tsv"), prop_eq_zero)
         writedlm(joinpath(output, "post-pred-prop-leq-one.tsv"), prop_leq_one)
         writedlm(joinpath(output, "post-pred-prop-leq-two.tsv"), prop_leq_two)
+        writedlm(joinpath(output, "post-pred-shannon-div.tsv"), shannon_div)
+        writedlm(joinpath(output, "post-pred-simpson-div.tsv"), simpson_div)
     end
 end

@@ -33,8 +33,13 @@ mimix () {
         --burnin $MCMC_BURNIN \
         --thin $MCMC_THIN \
         --chains $MCMC_CHAINS \
+        --post-pred-check \
         "$DATA_DIR" \
         $results_dir
+    Rscript nutnet-analysis/summarize-sensitivity-analysis.R \
+        $results_dir \
+        $results_dir \
+        "$DATA_DIR"
 }
 
 for nu_hyper in "${nu_hypers[@]}"; do

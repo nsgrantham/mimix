@@ -16,28 +16,49 @@ while getopts "d:o:f:i:b:t:c:" option; do
     esac
 done
 
-mkdir -p "$OUTPUT_DIR"/permanova
-julia scripts/fit-mcmc.jl \
-   --permanova \
-   "$DATA_DIR" \
-   "$OUTPUT_DIR"/permanova
+# mkdir -p "$OUTPUT_DIR"/permanova
+# /Applications/Julia-1.0.app/Contents/Resources/julia/bin/julia scripts/fit-mcmc.jl \
+#    --permanova \
+#    "$DATA_DIR" \
+#    "$OUTPUT_DIR"/permanova
+#
+# mkdir -p $OUTPUT_DIR/mimix-no-factors
+# /Applications/Julia-1.0.app/Contents/Resources/julia/bin/julia scripts/fit-mcmc.jl \
+#     --hyper nutnet-analysis/configs/hyper.yml \
+#     --inits nutnet-analysis/configs/inits.yml \
+#     --monitor nutnet-analysis/configs/monitor-mimix-no-factors.yml \
+#     --factors 0 \
+#     --iters $MCMC_ITERS \
+#     --burnin $MCMC_BURNIN \
+#     --thin $MCMC_THIN \
+#     --chains $MCMC_CHAINS \
+#     --post-pred-check \
+#     "$DATA_DIR" \
+#     "$OUTPUT_DIR"/mimix-no-factors
 
-mkdir -p $OUTPUT_DIR/mimix-no-factors
-julia scripts/fit-mcmc.jl \
-    --hyper nutnet-analysis/configs/hyper.yml \
-    --inits nutnet-analysis/configs/inits.yml \
-    --monitor nutnet-analysis/configs/monitor-mimix-no-factors.yml \
-    --factors 0 \
-    --iters $MCMC_ITERS \
-    --burnin $MCMC_BURNIN \
-    --thin $MCMC_THIN \
-    --chains $MCMC_CHAINS \
-    "$DATA_DIR" \
-    "$OUTPUT_DIR"/mimix-no-factors
+# Rscript nutnet-analysis/summarize-nutnet-analysis.R "$OUTPUT_DIR"/mimix-no-factors "$OUTPUT_DIR"/mimix-no-factors "$DATA_DIR"
+
+# mkdir -p "$OUTPUT_DIR"/mimix-gaussian
+# /Applications/Julia-1.0.app/Contents/Resources/julia/bin/julia scripts/fit-mcmc.jl \
+#    --hyper nutnet-analysis/configs/hyper.yml \
+#    --inits nutnet-analysis/configs/inits.yml \
+#    --monitor nutnet-analysis/configs/monitor-mimix.yml \
+#    --post-pred-check \
+#    --factors $FACTORS \
+#    --iters $MCMC_ITERS \
+#    --burnin $MCMC_BURNIN \
+#    --thin $MCMC_THIN \
+#    --chains $MCMC_CHAINS \
+#    --loadings 'G' \
+#    --post-pred-check \
+#    "$DATA_DIR" \
+#    "$OUTPUT_DIR"/mimix-gaussian
+
+# Rscript nutnet-analysis/summarize-nutnet-analysis.R "$OUTPUT_DIR"/mimix-gaussian "$OUTPUT_DIR"/mimix-gaussian "$DATA_DIR"
 
 mkdir -p "$OUTPUT_DIR"/mimix
-julia scripts/fit-mcmc.jl \
-   --hyper nutnet-analysis/configs/hyper.yml nutnet-analysis-configs/nu-hyper-1.yml\
+/Applications/Julia-1.0.app/Contents/Resources/julia/bin/julia scripts/fit-mcmc.jl \
+   --hyper nutnet-analysis/configs/hyper.yml \
    --inits nutnet-analysis/configs/inits.yml \
    --monitor nutnet-analysis/configs/monitor-mimix.yml \
    --post-pred-check \
@@ -46,7 +67,8 @@ julia scripts/fit-mcmc.jl \
    --burnin $MCMC_BURNIN \
    --thin $MCMC_THIN \
    --chains $MCMC_CHAINS \
+   --loadings 'DL' \
    "$DATA_DIR" \
    "$OUTPUT_DIR"/mimix
 
-Rscript nutnet-analysis/summarize-nutnet-analysis.R "$OUTPUT_DIR" "$OUTPUT_DIR" "$DATA_DIR"
+Rscript nutnet-analysis/summarize-nutnet-analysis.R "$OUTPUT_DIR"/mimix "$OUTPUT_DIR"/mimix "$DATA_DIR"

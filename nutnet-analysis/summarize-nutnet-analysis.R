@@ -58,12 +58,17 @@ plot_post_pred_check <- function(obs, preds, group, xlab="", ylab="") {
     guides(alpha=FALSE)
 }
 
-obs_max_count <- read.delim(file.path(args$input, "mimix", "obs-max-count.tsv"), header=FALSE)
-obs_prop_eq_zero <- read.delim(file.path(args$input, "mimix", "obs-prop-eq-zero.tsv"), header=FALSE)
-obs_prop_leq_two <- read.delim(file.path(args$input, "mimix", "obs-prop-leq-two.tsv"), header=FALSE)
-post_pred_max_count <- t(read.delim(file.path(args$input, "mimix", "post-pred-max-count.tsv"), header=FALSE))
-post_pred_prop_eq_zero <- t(read.delim(file.path(args$input, "mimix", "post-pred-prop-eq-zero.tsv"), header=FALSE))
-post_pred_prop_leq_two <- t(read.delim(file.path(args$input, "mimix", "post-pred-prop-leq-two.tsv"), header=FALSE))
+obs_max_count <- read.delim(file.path(args$input, "obs-max-count.tsv"), header=FALSE)
+obs_prop_eq_zero <- read.delim(file.path(args$input, "obs-prop-eq-zero.tsv"), header=FALSE)
+obs_prop_leq_two <- read.delim(file.path(args$input, "obs-prop-leq-two.tsv"), header=FALSE)
+obs_shannon_div <- read.delim(file.path(args$input, "obs-shannon-div.tsv"), header=FALSE)
+obs_simpson_div <- read.delim(file.path(args$input, "obs-simpson-div.tsv"), header=FALSE)
+post_pred_max_count <- t(read.delim(file.path(args$input, "post-pred-max-count.tsv"), header=FALSE))
+post_pred_prop_eq_zero <- t(read.delim(file.path(args$input, "post-pred-prop-eq-zero.tsv"), header=FALSE))
+post_pred_prop_leq_two <- t(read.delim(file.path(args$input, "post-pred-prop-leq-two.tsv"), header=FALSE))
+post_pred_shannon_div <- t(read.delim(file.path(args$input, "post-pred-shannon-div.tsv"), header=FALSE))
+post_pred_simpson_div <- t(read.delim(file.path(args$input, "post-pred-simpson-div.tsv"), header=FALSE))
+
 
 obs_order <- order(obs_prop_eq_zero)
 obs_prop_eq_zero <- obs_prop_eq_zero[obs_order, ]
@@ -78,19 +83,23 @@ p <- plot_post_pred_check(c(obs_prop_eq_zero, obs_prop_leq_two),
                      xlab="Sample IDs", ylab="Proportion of OTUs in sample")#, 
 ggsave(file.path(args$output, "post-pred-sparsity.png"), plot = p, width = 7.5, height = 4)
 
+obs_order <- order(obs_shannon_div)
+obs_shannon_div <- obs_shannon_div[obs_order, ]
+post_pred_shannon_div <- post_pred_shannon_div[obs_order, ]
+obs_order <- order(obs_simpson_div)
+obs_simpson_div <- obs_simpson_div[obs_order, ]
+post_pred_simpson_div <- post_pred_simpson_div[obs_order, ]
+p <- plot_post_pred_check(c(obs_shannon_div, obs_simpson_div), 
+                     rbind(post_pred_shannon_div, post_pred_simpson_div), 
+                     group = c(rep("Shannon-Weiner diversity", length(obs_shannon_div)),
+                               rep("Simpson diversity", length(obs_simpson_div))),
+                     xlab="Sample IDs", ylab="Alpha diversity index of sample") 
+ggsave(file.path(args$output, "post-pred-alpha-div.png"), plot = p, width = 7.5, height = 4)
+
 
 ## Global variable selection results
 
-# MIMIX posterior probability of variable inclusion
-
-omega <- read_tsv(file.path(args$input, "mimix", "omega.tsv"))
-mean(rowSums(select(omega, ends_with("1]"))) > 0)  # herbivore exclusion
-mean(rowSums(select(omega, ends_with("2]"))) > 0)  # nutrient amendment
-mean(rowSums(select(omega, ends_with("3]"))) > 0)  # interaction
-
-# MIMIX w/o Factors posterior probability of variable inclusion
-
-omega <- read_tsv(file.path(args$input, "mimix-no-factors", "omega.tsv"))
+omega <- read_tsv(file.path(args$input, "omega.tsv"))
 mean(rowSums(select(omega, ends_with("1]"))) > 0)  # herbivore exclusion
 mean(rowSums(select(omega, ends_with("2]"))) > 0)  # nutrient amendment
 mean(rowSums(select(omega, ends_with("3]"))) > 0)  # interaction
@@ -98,17 +107,22 @@ mean(rowSums(select(omega, ends_with("3]"))) > 0)  # interaction
 
 ## Get ordering of OTUs from hierarchical clustering of the factor correlation matrix
 
-Lambda <- as.matrix(read.delim(file.path(args$input, "mimix", "Lambda-postmean.tsv"), header=FALSE))
-LambdatLambda <- t(Lambda) %*% Lambda
-R <- cov2cor(LambdatLambda)
-C <- abs(R)
-clusters <- hclust(as.dist(1-C))
-ids <- rev(clusters$order)
-R <- R[ids, ids]
-LambdatLambda <- LambdatLambda[ids, ids]
-otu_names <- otu_names[ids]
+Lambda_path <- file.path(args$input, "Lambda-postmean.tsv")
+ids <- 1:ncol(Y)  # will be overwritten if Lambda_path is valid
 
-beta2 <- select(read_tsv(file.path(args$input, "mimix", "beta.tsv")), ends_with("2]"))
+if (file.exists(Lambda_path)) {
+  Lambda <- as.matrix(read.delim(Lambda_path, header=FALSE))
+  LambdatLambda <- t(Lambda) %*% Lambda
+  R <- cov2cor(LambdatLambda)
+  C <- abs(R)
+  clusters <- hclust(as.dist(1-C))
+  ids <- rev(clusters$order)
+  R <- R[ids, ids]
+  LambdatLambda <- LambdatLambda[ids, ids]
+  otu_names <- otu_names[ids]
+}
+
+beta2 <- select(read_tsv(file.path(args$input, "beta.tsv")), ends_with("2]"))
 beta2 <- beta2[, ids]      # order OTUs
 alpha <- 0.05
 quant_beta <- apply(beta2, 2, function(x) quantile(x, probs = c(alpha/2, 1-alpha/2)))
@@ -166,76 +180,94 @@ ggsave(file.path(args$output, "betarange-signif.png"), plot = p, width = 3.75, h
 
 ## Figure 5: Proportion of variance explained by site- and block-level effects
 
-g_var <- read_tsv(file.path(args$input, "mimix", "g_var.tsv"))
-theta_var <- read_tsv(file.path(args$input, "mimix", "theta_var.tsv"))
-theta_var <- theta_var[, ids]
+g_var_path <- file.path(args$input, "g_var.tsv")
+theta_var_path <- file.path(args$input, "theta_var.tsv") 
 
-g_var_hat <- colMeans(g_var)
-theta_var_hat <- colMeans(theta_var)
-LLt_factor_var <- diag(LambdatLambda) * (1 + sum(g_var_hat))
-eta <- LLt_factor_var / (LLt_factor_var + theta_var_hat)
-mean(eta > 0.5)
+if (file.exists(g_var_path) & file.exists(theta_var_path)) {
+  g_var <- read_tsv(g_var_path)
+  theta_var <- read_tsv(theta_var_path)
+  theta_var <- theta_var[, ids]
 
-df_var <- data.frame(
-  x = theta_var_hat, 
-  y = eta
-)
+  g_var_hat <- colMeans(g_var)
+  print(paste("g_var_hat:", g_var_hat, collapse = ", "))
+  theta_var_hat <- colMeans(theta_var)
+  LLt_factor_var <- diag(LambdatLambda) * (1 + sum(g_var_hat))
+  eta <- LLt_factor_var / (LLt_factor_var + theta_var_hat)
+  print(paste("Proportion of OTUs for which more than half of variance is explained by factors:", mean(eta > 0.5)))
 
-df_var_signif <- data.frame(
-  x = theta_var_hat[is_signif],
-  y = eta[is_signif], 
-  z = otu_names_signif
-)
+  df_var <- data.frame(
+    x = theta_var_hat, 
+    y = eta
+  )
 
-p <- ggplot(df_var) +
-  geom_point(aes(x=x, y=y), size = 0.5, alpha = 0.2) +
-  geom_point(data = df_var_signif, aes(x=x, y=y), size = 1) +
-  geom_text(data = df_var_signif, aes(x=x, y=y, label=z), size = 2, 
-            hjust = 0, vjust = 0, nudge_x = 0.2, nudge_y = 0.01, check_overlap = TRUE) +
-  scale_x_continuous(lim = c(0, 35)) + 
-  labs(x = expression(paste("Estimated error variance, ", hat(sigma)[k]^2)),
-       y = expression(paste("Estimated prop. of variance due to site- & block-level effects, ", hat(eta)[k])))
+  df_var_signif <- data.frame(
+    x = theta_var_hat[is_signif],
+    y = eta[is_signif], 
+    z = otu_names_signif
+  )
 
-ggsave(file.path(args$output, "proportion-variance.png"), plot = p, width = 7.5, height = 5)
+  p <- ggplot(df_var) +
+    geom_point(aes(x, y), size = 0.5, alpha = 0.2) +
+    scale_x_continuous(lim = c(0, 35)) + 
+    labs(x = expression(paste("Estimated error variance, ", hat(sigma)[k]^2)),
+         y = expression(paste("Estimated prop. of variance due to site- & block-level effects, ", hat(eta)[k])))
+
+  if (nrow(df_var_signif) > 0) {
+    p <- p +
+      geom_point(data = df_var_signif, aes(x, y), size = 1) +
+      geom_text(data = df_var_signif, aes(x, y, label = z), size = 2, 
+                hjust = 0, vjust = 0, nudge_x = 0.2, nudge_y = 0.01, check_overlap = TRUE)
+  }
+
+  ggsave(file.path(args$output, "proportion-variance.png"), plot = p, width = 7.5, height = 5)
+}
 
 
 ## Factor correlation matrix with significant OTUs marked on the diagonal
-pal <- c('#ff8c00','#ffb663','#ffdca3','#ffffe0','#e2bddb','#c17bd5','#9932cc')
-cuts <- c(-1, -0.7, -0.4, -0.1, 0.1, 0.4, 0.7, 1.0)
 
-get_lower_tri <- function(cormat){
-  cormat[upper.tri(cormat)] <- NA
-  return(cormat)
-}
+if (file.exists(Lambda_path)) {
+  pal <- c('#ff8c00','#ffb663','#ffdca3','#ffffe0','#e2bddb','#c17bd5','#9932cc')
+  cuts <- c(-1, -0.7, -0.4, -0.1, 0.1, 0.4, 0.7, 1.0)
 
-R_melt <- melt(get_lower_tri(R), na.rm = TRUE)
-R_melt$Var1 <- as.numeric(R_melt$Var1)
-R_melt$Var2 <- as.numeric(R_melt$Var2)
-R_melt$value2 <- cut(R_melt$value, breaks=cuts, include.lowest=TRUE)
+  get_lower_tri <- function(cormat){
+    cormat[upper.tri(cormat)] <- NA
+    return(cormat)
+  }
 
-idx_signif <- which(is_signif)
-df_idx_signif <- data.frame(
-  x = idx_signif,
-  y = idx_signif,
-  z = otu_names_signif
-)
+  R_melt <- melt(get_lower_tri(R), na.rm = TRUE)
+  R_melt$Var1 <- as.numeric(R_melt$Var1)
+  R_melt$Var2 <- as.numeric(R_melt$Var2)
+  R_melt$value2 <- cut(R_melt$value, breaks = cuts, include.lowest = TRUE)
 
-p <- ggplot(data = R_melt, aes(x = Var2, y = Var1, fill = value2)) + 
-  geom_tile(size=0) +
-  scale_fill_manual(values=pal, name="Correlation", drop=FALSE) +
-  guides(fill=guide_legend(reverse=TRUE)) +
-  scale_y_reverse() +
-  geom_text(data = df_idx_signif, aes(x = x, y = y, label="—"), 
-            size = 3, inherit.aes = FALSE, angle=45, nudge_x=12, nudge_y=18) +
-  geom_text(data = df_idx_signif, aes(x = x, y = y, label=z), inherit.aes = FALSE, 
-            size=2.5, hjust=0, vjust=0, nudge_x=30, nudge_y=35, check_overlap=TRUE) +
-  labs(x = "OTUs", y = "OTUs") +
-  theme(
-    axis.text.y = element_blank(),
-    axis.text.x = element_blank(),
-    panel.grid = element_blank(),
-    panel.background = element_blank(),
-    axis.ticks = element_blank(),
-    legend.position = c(0.9, 0.8)
+  idx_signif <- which(is_signif)
+  df_idx_signif <- data.frame(
+    x = idx_signif,
+    y = idx_signif,
+    z = otu_names_signif
   )
-ggsave(file.path(args$output, "correlation.png"), width = 10, height = 10)
+
+  p <- ggplot(R_melt, aes(Var2, Var1, fill = value2)) + 
+    geom_tile(size = 0) +
+    scale_fill_manual(values = pal, name = "Correlation", drop = FALSE) +
+    guides(fill = guide_legend(reverse = TRUE)) +
+    scale_y_reverse() +
+    labs(x = "OTUs", y = "OTUs") +
+    theme(
+      axis.text.y = element_blank(),
+      axis.text.x = element_blank(),
+      panel.grid = element_blank(),
+      panel.background = element_blank(),
+      axis.ticks = element_blank(),
+      legend.position = c(0.9, 0.8)
+    )
+
+  if (nrow(df_idx_signif) > 0) {
+    p <- p + 
+    geom_text(data = df_idx_signif, aes(x, y, label = "—"), 
+              size = 3, inherit.aes = FALSE, angle = 45, nudge_x = 1, nudge_y = 1) +
+    geom_text(data = df_idx_signif, aes(x, y, label = z), inherit.aes = FALSE, 
+              size = 2.5, hjust = 0, vjust = 0, nudge_x = 1.5, nudge_y = 1.5, check_overlap=TRUE)
+
+  }
+  ggsave(file.path(args$output, "correlation.png"), width = 10, height = 10)
+}
