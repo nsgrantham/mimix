@@ -160,7 +160,7 @@ function get_model(::MIMIXNoFactors, monitor::Dict{Symbol, Any}, hyper::Dict{Sym
                     end
                 end
                 if hyper[:hmc_verbose]
-                    println("HMC accept rate: $(round(100acc/N, 1))%, ")
+                    println("HMC accept rate: $(round(100acc/N, digits=1))%, ")
                 end
                 θ
             end

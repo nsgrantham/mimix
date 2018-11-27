@@ -21,7 +21,7 @@ function get_inits(::MIMIX, params::Dict{Symbol, Any}, data::Dict{Symbol, Any})
         :Λ => Matrix(1.0I, data[:L], data[:K]),
         :F => zeros(data[:N], data[:L]),
         :ψ => ones(data[:L], data[:K]),
-        :ξ => ones(data[:L], data[:K]),
+        :ξ => ones(data[:L], data[:K]) ./ data[:K],
         :τ => ones(data[:L]),
         :ν => 0.5,
         :b_full => b_init,
@@ -37,7 +37,7 @@ function get_inits(::MIMIX, params::Dict{Symbol, Any}, data::Dict{Symbol, Any})
 end
 
 function get_model(::MIMIX, monitor::Dict{Symbol, Any}, hyper::Dict{Symbol, Any})
-    
+
     model = Model(
         # High-dimensional counts
         Y = Stochastic(2,
@@ -257,7 +257,7 @@ function get_model(::MIMIX, monitor::Dict{Symbol, Any}, hyper::Dict{Symbol, Any}
                     end
                 end
                 if hyper[:hmc_verbose]
-                    println("HMC accept rate: $(round(100acc/N, 1))%, ")
+                    println("HMC accept rate: $(round(100acc/N, digits=1))%, ")
                 end
                 θ
             end
@@ -316,56 +316,14 @@ function get_model(::MIMIX, monitor::Dict{Symbol, Any}, hyper::Dict{Symbol, Any}
         ),
 
         Sampler(:τ, (τ, ξ, Λ, a, ν, L, K) ->
-            begin
-                S = 2vec(sum(abs.(Λ) ./ ξ, dims=2))
-                for l in 1:L
-                    τ[l] = rand(GeneralizedInverseGaussian(2ν, S[l], K * a[l] - K))
-                end
-                τ
+        begin
+            S = 2vec(sum(abs.(Λ) ./ ξ, dims=2))
+            for l in 1:L
+                τ[l] = rand(GeneralizedInverseGaussian(2ν, S[l], K * a[l] - K))
             end
+            τ
+        end
         ),
-
-#   Gibbs_ξ = Sampler([:ξ],
-#       (ξ, Λ, a, ν, L, K) ->
-#           begin
-#               A = a .- 1.0
-#               @rput A
-#               B = 2ν
-#               M = 2abs(Λ)
-#               boundbelow!(M)
-#               @rput M
-#               T = rcopy(reval("""
-#                   Tmat <- matrix(0, nrow=$L, ncol=$K)
-#                   for (l in 1:$L) {
-#                       for(k in 1:$K) {
-#                           Tmat[l, k] <- rgig(n=1, lambda=A[l], chi=M[l, k], psi=$B)
-#                       }
-#                   }
-#                   Tmat
-#                   """))
-#               ξ = T ./ sum(T, 2)
-#               ξ
-#           end
-#   )
-#
-#   Gibbs_τ = Sampler([:τ],
-#       (ξ, Λ, a, ν, L, K) ->
-#           begin
-#               A = K .* a .- K
-#               @rput A
-#               B = 2ν
-#               S = 2vec(sum(abs(Λ) ./ ξ, 2))
-#               @rput S
-#               τ = rcopy(reval("""
-#                   tau <- vector('double', length=$L)
-#                   for (l in 1:$L) {
-#                       tau[l] <- rgig(n=1, lambda=A[l], chi=S[l], psi=$B)
-#                   }
-#                   tau
-#                   """))
-#               τ
-#           end
-#   )
 
         Sampler(:ν, (τ, K, a, ν) ->
             begin

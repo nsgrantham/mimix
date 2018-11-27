@@ -158,17 +158,13 @@ function rand(d::GeneralizedInverseGaussian)
     p >= 0 ? x / α : 1 / (α * x)
 end
 
-function _gigqdf(x::Real, λ::Real, β::Real)
-    (x^(λ - 1)) * exp(-β * (x + 1 / x) / 2) 
-end
-
 function _hormann(λ::Real, β::Real)
     # compute bounding rectangles
     m = β / (1 - λ + sqrt((1 - λ)^2 + β^2))  # mode
     x0 = β / (1 - λ)
     xstar = max(x0, 2 / β)
     # in subdomain (0, x0)
-    k1 = _gigqdf(m, λ, β)
+    k1 = exp((λ - 1) * log(m) - β * (m + 1 / m) / 2)
     a1 = k1 * x0
     # in subdomain (x0, 2 / β), may be empty
     if x0 < 2 / β
@@ -187,22 +183,19 @@ function _hormann(λ::Real, β::Real)
     while true
         u = rand()
         v = a * rand()
-        if v <= a1
-            # in subdomain (0, x0)
+        if v <= a1  # in subdomain (0, x0)
             x = x0 * v / a1
             h = k1
-        elseif v <= a1 + a2
-            # in subdomain (x0, 2 / β)
+        elseif v <= a1 + a2  # in subdomain (x0, 2 / β)
             v -= a1
             x = λ == 0 ? β * exp(v * exp(β)) : (x0^λ + v * λ / k2)^(1 / λ)
             h = k2 * x^(λ - 1)
-        else
-            # in subdomain (xstar, Inf)
+        else  # in subdomain (xstar, Inf)
             v -= a1 + a2
             x = -2log(exp(-xstar * β / 2) - v * β / (2k3)) / β
             h = k3 * exp(-x * β / 2)
         end
-        if u * h <= _gigqdf(x, λ, β)
+        if log(u * h) <= ((λ - 1) * log(x) - β * (x + 1 / x) / 2)
             return x
         end
     end
@@ -211,16 +204,16 @@ end
 function _rou(λ::Real, β::Real)
     # compute bounding rectangle
     m = β / (1 - λ + sqrt((1 - λ)^2 + β^2))  # mode
+    k = 0.5(λ - 1) - 0.25β * (m + 1 / m)
     xpos = (1 + λ + sqrt((1 + λ)^2 + β^2)) / β
-    vpos = sqrt(_gigqdf(m, λ, β))
-    upos = xpos * sqrt(_gigqdf(xpos, λ, β))
+    upos = xpos * exp(0.5(λ - 1) * log(xpos) - 0.25β * (m + 1 / m) - k)
     
     # perform rejection sampling
     while true
         u = upos * rand()
-        v = vpos * rand()
+        v = rand()
         x = u / v
-        if v^2 <= _gigqdf(x, λ, β)
+        if log(v) <= (0.25(λ - 1) * log(x) - 0.25β * (x + 1 / x) - k) 
             return x
         end
     end
@@ -233,20 +226,20 @@ function _rou_shift(λ::Real, β::Real)
     b = 2(λ - 1) * m / β - 1
     p = b - (a^2) / 3
     q = 2(a^3) / 27 - (a * b) / 3 + m
-    ϕ = acos(-(q / 2) * sqrt(-27 / (p^3)))  # Cardano's formula
+    ϕ = acos(-(q / (2sqrt(-(p^3) / 27))))  # Cardano's formula
     r = sqrt(-4p / 3)
     xneg = r * cos(ϕ / 3 + 4π / 3) - a / 3
     xpos = r * cos(ϕ / 3) - a / 3
-    vpos = sqrt(_gigqdf(m, λ, β))
-    uneg = (xneg - m) * sqrt(_gigqdf(xneg, λ, β))
-    upos = (xpos - m) * sqrt(_gigqdf(xpos, λ, β))
+    k = 0.5(λ - 1) * log(m) - 0.25β * (m + 1 / m)
+    uneg = (xneg - m) * exp(0.5(λ - 1) * log(xneg) - 0.25β * (xneg + 1 / xneg) - k)
+    upos = (xpos - m) * exp(0.5(λ - 1) * log(xpos) - 0.25β * (xpos + 1 / xpos) - k)
 
     # perform rejection sampling
     while true
         u = (upos - uneg) * rand() + uneg
-        v = vpos * rand()
-        x = max(u / v + m, 0)
-        if v^2 <= _gigqdf(x, λ, β)
+        v = rand()
+        x = u / v + m
+        if (x > 0) && (log(v) <= 0.5(λ - 1) * log(x) - 0.25β * (x + 1 / x) - k)
             return x
         end
     end
