@@ -36,7 +36,7 @@ mimix () {
         --post-pred-check \
         "$DATA_DIR" \
         $results_dir
-    Rscript nutnet-analysis/summarize-sensitivity-analysis.R \
+    Rscript nutnet-analysis/summarize-nutnet-analysis.R \
         $results_dir \
         $results_dir \
         "$DATA_DIR"

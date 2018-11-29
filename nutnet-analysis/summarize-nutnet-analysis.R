@@ -63,12 +63,13 @@ obs_prop_eq_zero <- read.delim(file.path(args$input, "obs-prop-eq-zero.tsv"), he
 obs_prop_leq_two <- read.delim(file.path(args$input, "obs-prop-leq-two.tsv"), header=FALSE)
 obs_shannon_div <- read.delim(file.path(args$input, "obs-shannon-div.tsv"), header=FALSE)
 obs_simpson_div <- read.delim(file.path(args$input, "obs-simpson-div.tsv"), header=FALSE)
+obs_braycurtis_div <- read.delim(file.path(args$input, "obs-braycurtis-div.tsv"), header=FALSE)
 post_pred_max_count <- t(read.delim(file.path(args$input, "post-pred-max-count.tsv"), header=FALSE))
 post_pred_prop_eq_zero <- t(read.delim(file.path(args$input, "post-pred-prop-eq-zero.tsv"), header=FALSE))
 post_pred_prop_leq_two <- t(read.delim(file.path(args$input, "post-pred-prop-leq-two.tsv"), header=FALSE))
 post_pred_shannon_div <- t(read.delim(file.path(args$input, "post-pred-shannon-div.tsv"), header=FALSE))
 post_pred_simpson_div <- t(read.delim(file.path(args$input, "post-pred-simpson-div.tsv"), header=FALSE))
-
+post_pred_braycurtis_div <- t(read.delim(file.path(args$input, "post-pred-braycurtis-div.tsv"), header=FALSE))
 
 obs_order <- order(obs_prop_eq_zero)
 obs_prop_eq_zero <- obs_prop_eq_zero[obs_order, ]
@@ -96,6 +97,18 @@ p <- plot_post_pred_check(c(obs_shannon_div, obs_simpson_div),
                      xlab="Sample IDs", ylab="Alpha diversity index of sample") 
 ggsave(file.path(args$output, "post-pred-alpha-div.png"), plot = p, width = 7.5, height = 4)
 
+
+obs_order <- order(obs_braycurtis_div)
+obs_braycurtis_div <- obs_braycurtis_div[obs_order, ]
+post_pred_braycurtis_div <- post_pred_braycurtis_div[obs_order, ]
+#obs_order <- order(obs_prop_leq_two)
+#obs_prop_leq_two <- obs_prop_leq_two[obs_order, ]
+#post_pred_prop_leq_two <- post_pred_prop_leq_two[obs_order, ]
+p <- plot_post_pred_check(c(obs_braycurtis_div), 
+                     rbind(post_pred_braycurtis_div), 
+                     group = c(rep("Bray-Curtis diversity", length(obs_braycurtis_div))),
+                     xlab="Group IDs", ylab="Average beta diversity of index of treatment and block combination") 
+ggsave(file.path(args$output, "post-pred-beta-div.png"), plot = p, width = 7.5, height = 4)
 
 ## Global variable selection results
 

@@ -194,7 +194,7 @@ else  # mimix
     end
 
     if args["post-pred-check"]
-        # Posterior predictive checks on sparsity, overdispersion, and alpha diversity
+        # Posterior predictive checks on sparsity, overdispersion, and ecological diversity (alpha and beta)
 
         function shannon_diversity(x::Vector{T}) where T <: Real
             p = x ./ sum(x)
@@ -207,18 +207,51 @@ else  # mimix
             return sum(abs2, p)
         end
 
+        function braycurtis_diversity(x::Vector{T}, y::Vector{T}) where T <: Real
+            c = zero(eltype(x))
+            s = zero(eltype(x))
+            for i in eachindex(x, y)
+                c += min(x[i], y[i])
+                s += x[i] + y[i]
+            end
+            return 2c / s
+        end
+
+        function calculate_mean_braycurtis_div_by_group(Y, groups)
+            @assert size(Y, 1) == length(groups)
+            mean_braycurtis_div = zeros(maximum(group_ids))
+            for group_id in unique(group_ids)
+                Y_group = Y[group_id .== group_ids, :]
+                pairwise_braycurtis_div = Float64[]
+                for i in 1:size(Y_group, 1)
+                    for j in i+1:size(Y_group, 1)
+                        push!(pairwise_braycurtis_div, braycurtis_diversity(Y_group[i, :], Y_group[j, :]))
+                    end
+                end
+                mean_braycurtis_div[group_id] = mean(pairwise_braycurtis_div)
+            end
+            return mean_braycurtis_div
+        end
+
+        matchrows(A::Matrix, B::Matrix) = mapslices(findall, hcat([all(A .== transpose(B[i, :]), dims=2) for i in 1:size(B, 1)]...), dims=2) 
+
+        full_combos = hcat(data[:X], data[:Z])
+        group_ids = vec(matchrows(full_combos, unique(full_combos, dims=1)))  # each group is unique combo of treatment, site, and blocks
+        
         obs_max_count = vec(maximum(data[:Y], dims=2) ./ sum(data[:Y], dims=2))
         obs_prop_eq_zero = vec(mean(data[:Y] .== 0.0, dims=2))
         obs_prop_leq_one = vec(mean(data[:Y] .<= 1.0, dims=2))
         obs_prop_leq_two = vec(mean(data[:Y] .<= 2.0, dims=2))
         obs_shannon_div = mapslices(shannon_diversity, data[:Y], dims=2)
         obs_simpson_div = mapslices(simpson_diversity, data[:Y], dims=2)
+        obs_braycurtis_div = reshape(calculate_mean_braycurtis_div_by_group(data[:Y], group_ids), maximum(group_ids), 1)
         writedlm(joinpath(output, "obs-max-count.tsv"), obs_max_count)
         writedlm(joinpath(output, "obs-prop-eq-zero.tsv"), obs_prop_eq_zero)
         writedlm(joinpath(output, "obs-prop-leq-one.tsv"), obs_prop_leq_one)
         writedlm(joinpath(output, "obs-prop-leq-two.tsv"), obs_prop_leq_two)
         writedlm(joinpath(output, "obs-shannon-div.tsv"), obs_shannon_div)
         writedlm(joinpath(output, "obs-simpson-div.tsv"), obs_simpson_div)
+        writedlm(joinpath(output, "obs-braycurtis-div.tsv"), obs_braycurtis_div)
 
         if monitor_θ
             θ_post = convert(Matrix, get_post(sim, data, :θ))
@@ -231,6 +264,7 @@ else  # mimix
         prop_leq_two = zeros(n_iter, data[:N])
         shannon_div = zeros(n_iter, data[:N])
         simpson_div = zeros(n_iter, data[:N])
+        braycurtis_div = zeros(n_iter, maximum(group_ids))
         for iter in 1:n_iter
             ϕ = clr(reshape(θ_post[iter, :], data[:N], data[:K]))
             Y_pred_iter = hcat([rand(Multinomial(data[:m][i], ϕ[i, :])) for i in 1:data[:N]]...)'
@@ -240,6 +274,7 @@ else  # mimix
             prop_leq_two[iter, :] = vec(mean(Y_pred_iter .<= 2.0, dims=2))
             shannon_div[iter, :] = mapslices(shannon_diversity, Y_pred_iter, dims=2)
             simpson_div[iter, :] = mapslices(simpson_diversity, Y_pred_iter, dims=2)
+            braycurtis_div[iter, :] = calculate_mean_braycurtis_div_by_group(Y_pred_iter, group_ids) 
         end
 
         writedlm(joinpath(output, "post-pred-max-count.tsv"), max_count)
@@ -248,5 +283,6 @@ else  # mimix
         writedlm(joinpath(output, "post-pred-prop-leq-two.tsv"), prop_leq_two)
         writedlm(joinpath(output, "post-pred-shannon-div.tsv"), shannon_div)
         writedlm(joinpath(output, "post-pred-simpson-div.tsv"), simpson_div)
+        writedlm(joinpath(output, "post-pred-braycurtis-div.tsv"), braycurtis_div)
     end
 end
