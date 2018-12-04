@@ -184,16 +184,16 @@ else  # mimix
         writedlm(post_path, Λ_postmean)
 
         # We can also store the posterior mean of Lambda' * Lambda
-        ΛtΛs = Matrix{Float64}[]
-        for i in 1:size(Λ_values, 1)
-            Λ_mat = reshape(Λ_values[i, :], data[:L], data[:K])
-            push!(ΛtΛs, transpose(Λ_mat) * Λ_mat)
-        end
-        ΛtΛ_postmean = sum(ΛtΛs, dims=3)
-        ΛtΛ_postmean ./= size(Λ_values, 1)
-        post_path = joinpath(output, "LambdatLambda-postmean.tsv")
-        println("Saving posterior mean of Lambda' * Lambda to $post_path")
-        writedlm(post_path, ΛtΛ_postmean)
+        # ΛtΛs = Matrix{Float64}[]
+        # for i in 1:size(Λ_values, 1)
+        #     Λ_mat = reshape(Λ_values[i, :], data[:L], data[:K])
+        #     push!(ΛtΛs, transpose(Λ_mat) * Λ_mat)
+        # end
+        # ΛtΛ_postmean = sum(ΛtΛs, dims=3)
+        # ΛtΛ_postmean ./= size(Λ_values, 1)
+        # post_path = joinpath(output, "LambdatLambda-postmean.tsv")
+        # println("Saving posterior mean of Lambda' * Lambda to $post_path")
+        # writedlm(post_path, ΛtΛ_postmean)
     end
 
     if args["post-pred-check"]
