@@ -51,12 +51,12 @@ function get_post(sim, data, param)
         :Y => ["Y[$i, $k]" for i in 1:N, k in 1:K],
         :ϕ => ["ϕ[$i, $k]" for i in 1:N, k in 1:K],
         :θ => ["θ[$i, $k]" for i in 1:N, k in 1:K],
-        :θ_mean => ["θ_mean[$k]" for k in 1:K],
+        :θ_mean => ["θ_mean[$i, $k]" for i in 1:N, k in 1:K],
         :θ_var => ["θ_var[$k]" for k in 1:K],
         :μ => ["μ[$k]" for k in 1:K],
         :μ_var => ["μ_var"],
         :β => ["β[$k, $j]" for k in 1:K, j in 1:p],
-        :β_full => [],
+        :β_full => ["β[$k, $j]" for k in 1:K, j in 1:p],
         :β_var => ["β_var[$j]" for j in 1:p],
         :γ => ["γ[$k, $r]" for k in 1:K, r in 1:num_blocking_factors],
         :γ_var => ["γ_var[$r]" for r in 1:num_blocking_factors],
@@ -72,7 +72,7 @@ function get_post(sim, data, param)
         :g => ["g[$l, $r]" for l in 1:L, r in 1:num_blocking_factors],
         :g_var => ["g_var[$r]" for r in 1:num_blocking_factors],
         :b => ["b[$l, $j]" for l in 1:L, j in 1:p],
-        :b_full => ["b[$k, $j]" for k in 1:K, j in 1:p],
+        :b_full => ["b[$l, $j]" for l in 1:L, j in 1:p],
         :b_var => ["b_var[$j]" for j in 1:p],
     )
     _, _, chains = size(sim)

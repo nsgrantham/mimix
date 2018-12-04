@@ -58,57 +58,91 @@ plot_post_pred_check <- function(obs, preds, group, xlab="", ylab="") {
     guides(alpha=FALSE)
 }
 
-obs_max_count <- read.delim(file.path(args$input, "obs-max-count.tsv"), header=FALSE)
-obs_prop_eq_zero <- read.delim(file.path(args$input, "obs-prop-eq-zero.tsv"), header=FALSE)
-obs_prop_leq_two <- read.delim(file.path(args$input, "obs-prop-leq-two.tsv"), header=FALSE)
-obs_shannon_div <- read.delim(file.path(args$input, "obs-shannon-div.tsv"), header=FALSE)
-obs_simpson_div <- read.delim(file.path(args$input, "obs-simpson-div.tsv"), header=FALSE)
-obs_braycurtis_div <- read.delim(file.path(args$input, "obs-braycurtis-div.tsv"), header=FALSE)
-post_pred_max_count <- t(read.delim(file.path(args$input, "post-pred-max-count.tsv"), header=FALSE))
-post_pred_prop_eq_zero <- t(read.delim(file.path(args$input, "post-pred-prop-eq-zero.tsv"), header=FALSE))
-post_pred_prop_leq_two <- t(read.delim(file.path(args$input, "post-pred-prop-leq-two.tsv"), header=FALSE))
-post_pred_shannon_div <- t(read.delim(file.path(args$input, "post-pred-shannon-div.tsv"), header=FALSE))
-post_pred_simpson_div <- t(read.delim(file.path(args$input, "post-pred-simpson-div.tsv"), header=FALSE))
-post_pred_braycurtis_div <- t(read.delim(file.path(args$input, "post-pred-braycurtis-div.tsv"), header=FALSE))
+post_pred_checks <- c("theta_mcmc", "theta_prior")
 
-obs_order <- order(obs_prop_eq_zero)
-obs_prop_eq_zero <- obs_prop_eq_zero[obs_order, ]
-post_pred_prop_eq_zero <- post_pred_prop_eq_zero[obs_order, ]
-obs_order <- order(obs_prop_leq_two)
-obs_prop_leq_two <- obs_prop_leq_two[obs_order, ]
-post_pred_prop_leq_two <- post_pred_prop_leq_two[obs_order, ]
-p <- plot_post_pred_check(c(obs_prop_eq_zero, obs_prop_leq_two), 
-                     rbind(post_pred_prop_eq_zero, post_pred_prop_leq_two), 
-                     group = c(rep("Exactly zero reads", length(obs_prop_eq_zero)), 
-                               rep("Two or fewer reads", length(obs_prop_leq_two))),
-                     xlab="Sample IDs", ylab="Proportion of OTUs in sample")#, 
-ggsave(file.path(args$output, "post-pred-sparsity.png"), plot = p, width = 7.5, height = 4)
+for (post_pred_check in post_pred_checks) {
+  post_pred_input_dir <- file.path(args$input, post_pred_check)
+  if (!dir.exists(post_pred_input_dir)) next
 
-obs_order <- order(obs_shannon_div)
-obs_shannon_div <- obs_shannon_div[obs_order, ]
-post_pred_shannon_div <- post_pred_shannon_div[obs_order, ]
-obs_order <- order(obs_simpson_div)
-obs_simpson_div <- obs_simpson_div[obs_order, ]
-post_pred_simpson_div <- post_pred_simpson_div[obs_order, ]
-p <- plot_post_pred_check(c(obs_shannon_div, obs_simpson_div), 
-                     rbind(post_pred_shannon_div, post_pred_simpson_div), 
-                     group = c(rep("Shannon-Weiner diversity", length(obs_shannon_div)),
-                               rep("Simpson diversity", length(obs_simpson_div))),
-                     xlab="Sample IDs", ylab="Alpha diversity index of sample") 
-ggsave(file.path(args$output, "post-pred-alpha-div.png"), plot = p, width = 7.5, height = 4)
+  post_pred_output_dir <- file.path(args$output, post_pred_check)
+  if (!dir.exists(post_pred_output_dir)) dir.create(post_pred_output_dir)
+
+  obs_max_count <- read.delim(file.path(args$input, "obs-max-count.tsv"), header=FALSE)
+  obs_mean_count <- read.delim(file.path(args$input, "obs-mean-count.tsv"), header=FALSE)
+  obs_prop_eq_zero <- read.delim(file.path(args$input, "obs-prop-eq-zero.tsv"), header=FALSE)
+  obs_prop_leq_two <- read.delim(file.path(args$input, "obs-prop-leq-two.tsv"), header=FALSE)
+  obs_shannon_div <- read.delim(file.path(args$input, "obs-shannon-div.tsv"), header=FALSE)
+  obs_simpson_div <- read.delim(file.path(args$input, "obs-simpson-div.tsv"), header=FALSE)
+  obs_braycurtis_div <- read.delim(file.path(args$input, "obs-braycurtis-div.tsv"), header=FALSE)
+  obs_jaccard_div <- read.delim(file.path(args$input, "obs-jaccard-div.tsv"), header=FALSE)
+  post_pred_max_count <- t(read.delim(file.path(post_pred_input_dir, "post-pred-max-count.tsv"), header=FALSE))
+  post_pred_mean_count <- t(read.delim(file.path(post_pred_input_dir, "post-pred-mean-count.tsv"), header=FALSE))
+  post_pred_prop_eq_zero <- t(read.delim(file.path(post_pred_input_dir, "post-pred-prop-eq-zero.tsv"), header=FALSE))
+  post_pred_prop_leq_two <- t(read.delim(file.path(post_pred_input_dir, "post-pred-prop-leq-two.tsv"), header=FALSE))
+  post_pred_shannon_div <- t(read.delim(file.path(post_pred_input_dir, "post-pred-shannon-div.tsv"), header=FALSE))
+  post_pred_simpson_div <- t(read.delim(file.path(post_pred_input_dir, "post-pred-simpson-div.tsv"), header=FALSE))
+  post_pred_braycurtis_div <- t(read.delim(file.path(post_pred_input_dir, "post-pred-braycurtis-div.tsv"), header=FALSE))
+  post_pred_jaccard_div <- t(read.delim(file.path(post_pred_input_dir, "post-pred-jaccard-div.tsv"), header=FALSE))
+
+  obs_order <- order(obs_prop_eq_zero)
+  obs_prop_eq_zero <- obs_prop_eq_zero[obs_order, ]
+  post_pred_prop_eq_zero <- post_pred_prop_eq_zero[obs_order, ]
+  obs_order <- order(obs_prop_leq_two)
+  obs_prop_leq_two <- obs_prop_leq_two[obs_order, ]
+  post_pred_prop_leq_two <- post_pred_prop_leq_two[obs_order, ]
+  p <- plot_post_pred_check(c(obs_prop_eq_zero, obs_prop_leq_two), 
+                       rbind(post_pred_prop_eq_zero, post_pred_prop_leq_two), 
+                       group = c(rep("Exactly zero reads", length(obs_prop_eq_zero)), 
+                                 rep("Two or fewer reads", length(obs_prop_leq_two))),
+                       xlab="Sample IDs", ylab="Proportion of OTUs in sample")#, 
+  ggsave(file.path(post_pred_output_dir, "post-pred-sparsity.png"), plot = p, width = 7.5, height = 4)
+
+  obs_order <- order(obs_max_count)
+  obs_max_count <- obs_max_count[obs_order, ]
+  post_pred_max_count <- post_pred_max_count[obs_order, ]
+  p <- plot_post_pred_check(c(obs_max_count), 
+                       rbind(post_pred_max_count), 
+                       group = c(rep("Max count", length(obs_max_count))),
+                       xlab="Sample IDs", ylab="Number of reads")#, 
+  ggsave(file.path(post_pred_output_dir, "post-pred-max-count.png"), plot = p, width = 7.5, height = 4)
+
+  obs_order <- order(obs_mean_count)
+  obs_mean_count <- obs_mean_count[obs_order, ]
+  print(length(obs_mean_count))
+  post_pred_mean_count <- post_pred_mean_count[obs_order, ]
+  p <- plot_post_pred_check(c(obs_mean_count[1:160]), 
+                       rbind(post_pred_mean_count[1:160, ]), 
+                       group = c(rep("Mean count", length(obs_mean_count[1:160]))),
+                       xlab="Sample IDs", ylab="Number of reads")#, 
+  ggsave(file.path(post_pred_output_dir, "post-pred-mean-count.png"), plot = p, width = 7.5, height = 4)
+
+  obs_order <- order(obs_shannon_div)
+  obs_shannon_div <- obs_shannon_div[obs_order, ]
+  post_pred_shannon_div <- post_pred_shannon_div[obs_order, ]
+  obs_order <- order(obs_simpson_div)
+  obs_simpson_div <- obs_simpson_div[obs_order, ]
+  post_pred_simpson_div <- post_pred_simpson_div[obs_order, ]
+  p <- plot_post_pred_check(c(obs_shannon_div, obs_simpson_div), 
+                       rbind(post_pred_shannon_div, post_pred_simpson_div), 
+                       group = c(rep("Shannon-Weiner diversity", length(obs_shannon_div)),
+                                 rep("Simpson diversity", length(obs_simpson_div))),
+                       xlab="Sample IDs", ylab="Alpha diversity index of sample") 
+  ggsave(file.path(post_pred_output_dir, "post-pred-alpha-div.png"), plot = p, width = 7.5, height = 4)
 
 
-obs_order <- order(obs_braycurtis_div)
-obs_braycurtis_div <- obs_braycurtis_div[obs_order, ]
-post_pred_braycurtis_div <- post_pred_braycurtis_div[obs_order, ]
-#obs_order <- order(obs_prop_leq_two)
-#obs_prop_leq_two <- obs_prop_leq_two[obs_order, ]
-#post_pred_prop_leq_two <- post_pred_prop_leq_two[obs_order, ]
-p <- plot_post_pred_check(c(obs_braycurtis_div), 
-                     rbind(post_pred_braycurtis_div), 
-                     group = c(rep("Bray-Curtis diversity", length(obs_braycurtis_div))),
-                     xlab="Group IDs", ylab="Average beta diversity of index of treatment and block combination") 
-ggsave(file.path(args$output, "post-pred-beta-div.png"), plot = p, width = 7.5, height = 4)
+  obs_order <- order(obs_braycurtis_div)
+  obs_braycurtis_div <- obs_braycurtis_div[obs_order, ]
+  post_pred_braycurtis_div <- post_pred_braycurtis_div[obs_order, ]
+  obs_order <- order(obs_jaccard_div)
+  obs_jaccard_div <- obs_jaccard_div[obs_order, ]
+  post_pred_jaccard_div <- post_pred_jaccard_div[obs_order, ]
+  p <- plot_post_pred_check(c(obs_braycurtis_div, obs_jaccard_div), 
+                       rbind(post_pred_braycurtis_div, post_pred_jaccard_div), 
+                       group = c(rep("Bray-Curtis diversity", length(obs_braycurtis_div)),
+                                 rep("Jaccard diversity", length(obs_jaccard_div))),
+                       xlab="Group IDs", ylab="Average similarity") 
+  ggsave(file.path(post_pred_output_dir, "post-pred-beta-div.png"), plot = p, width = 7.5, height = 4)
+}
 
 ## Global variable selection results
 
