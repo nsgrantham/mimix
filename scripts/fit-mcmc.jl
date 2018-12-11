@@ -156,7 +156,7 @@ else  # mimix
     monitor_ϕ = pop!(monitor_conf, :ϕ)
     monitor_θ = pop!(monitor_conf, :θ)
     monitor_θ_mean = pop!(monitor_conf, :θ_mean)
-    monitor_θ_var = pop!(monitor_conf, :θ_var)
+    monitor_θ_var = monitor_conf[:θ_var]
     monitor_Λ = pop!(monitor_conf, :Λ)
 
     for (param, monitor) in monitor_conf
