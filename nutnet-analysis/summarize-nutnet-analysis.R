@@ -23,7 +23,7 @@ Z <- read.csv(file.path(args$data, "Z.csv"), header=FALSE)
 K <- ncol(Y)
 
 if (file.exists(file.path(args$data, "tax.csv"))) {
-  tax <- read.csv(file.path("data", "tax.csv"), header=FALSE, stringsAsFactors = FALSE)
+  tax <- read.csv(file.path(args$data, "tax.csv"), header=FALSE, stringsAsFactors = FALSE)
   tax$V2[tax$V2 == "None"] <- "; ; ; ; ; ; Fungi sp"
   tax_table <- as.data.frame(do.call(rbind, strsplit(tax$V2, "; ")), stringsAsFactors = FALSE)
   otu_names <- make.unique(sub(" sp", "", gsub("_", " ", sub("s__", "", tax_table$V7))), sep=" ")
@@ -311,9 +311,9 @@ if (file.exists(Lambda_path)) {
   if (nrow(df_idx_signif) > 0) {
     p <- p + 
     geom_text(data = df_idx_signif, aes(x, y, label = "—"), 
-              size = 3, inherit.aes = FALSE, angle = 45, nudge_x = 1, nudge_y = 1) +
+              size = 3, inherit.aes = FALSE, angle = 45, nudge_x = 12, nudge_y = 12) +
     geom_text(data = df_idx_signif, aes(x, y, label = z), inherit.aes = FALSE, 
-              size = 2.5, hjust = 0, vjust = 0, nudge_x = 1.5, nudge_y = 1.5, check_overlap=TRUE)
+              size = 2.5, hjust = 0, vjust = 0, nudge_x = 25, nudge_y = 25, check_overlap=TRUE)
 
   }
   ggsave(file.path(args$output, "correlation.png"), width = 10, height = 10)

@@ -175,7 +175,8 @@ if args["permanova"]
         reject_global_null = sim[:pval] < 0.05,
         dense = data_conf[:dense],
         block_var = data_conf[:block_var],
-        error_var = data_conf[:error_var]
+        error_var = data_conf[:error_var],
+        form = data_conf[:form]
     )
 
     global_test_path = joinpath(output, "global-test.tsv")
@@ -225,7 +226,8 @@ else  # mimix
         reject_global_null = post_prob_inclusion > 0.9,
         dense = data_conf[:dense],
         block_var = data_conf[:block_var],
-        error_var = data_conf[:error_var]
+        error_var = data_conf[:error_var],
+        form = data_conf[:form]
     )
 
     global_test_path = joinpath(output, "global-test.tsv")

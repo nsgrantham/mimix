@@ -14,83 +14,83 @@ done
 # Define simulation study settings
 
 settings_dir=simulation-study/configs
-setting01=(high-dense.yml       low-error-var.yml  low-block-var.yml grouped-form.yml)
-setting02=(high-dense.yml       low-error-var.yml high-block-var.yml grouped-form.yml)
-setting03=(high-dense.yml      high-error-var.yml  low-block-var.yml grouped-form.yml)
-setting04=(high-dense.yml      high-error-var.yml high-block-var.yml grouped-form.yml)
-setting05=(high-dense.yml very-high-error-var.yml  low-block-var.yml grouped-form.yml)
-setting06=(high-dense.yml very-high-error-var.yml high-block-var.yml grouped-form.yml)
-setting07=( low-dense.yml       low-error-var.yml  low-block-var.yml grouped-form.yml)
-setting08=( low-dense.yml       low-error-var.yml high-block-var.yml grouped-form.yml)
-setting09=( low-dense.yml      high-error-var.yml  low-block-var.yml grouped-form.yml)
-setting10=( low-dense.yml      high-error-var.yml high-block-var.yml grouped-form.yml)
-setting11=( low-dense.yml very-high-error-var.yml  low-block-var.yml grouped-form.yml)
-setting12=( low-dense.yml very-high-error-var.yml high-block-var.yml grouped-form.yml)
-setting13=(high-dense.yml       low-error-var.yml  low-block-var.yml  random-form.yml)
-setting14=(high-dense.yml       low-error-var.yml high-block-var.yml  random-form.yml)
-setting15=(high-dense.yml      high-error-var.yml  low-block-var.yml  random-form.yml)
-setting16=(high-dense.yml      high-error-var.yml high-block-var.yml  random-form.yml)
-setting17=(high-dense.yml very-high-error-var.yml  low-block-var.yml  random-form.yml)
-setting18=(high-dense.yml very-high-error-var.yml high-block-var.yml  random-form.yml)
-setting19=( low-dense.yml       low-error-var.yml  low-block-var.yml  random-form.yml)
-setting20=( low-dense.yml       low-error-var.yml high-block-var.yml  random-form.yml)
-setting21=( low-dense.yml      high-error-var.yml  low-block-var.yml  random-form.yml)
-setting22=( low-dense.yml      high-error-var.yml high-block-var.yml  random-form.yml)
-setting23=( low-dense.yml very-high-error-var.yml  low-block-var.yml  random-form.yml)
-setting24=( low-dense.yml very-high-error-var.yml high-block-var.yml  random-form.yml)
-setting25=(  no-dense.yml       low-error-var.yml  low-block-var.yml)
-setting26=(  no-dense.yml       low-error-var.yml high-block-var.yml)
-setting27=(  no-dense.yml      high-error-var.yml  low-block-var.yml)
-setting28=(  no-dense.yml      high-error-var.yml high-block-var.yml)
-setting29=(  no-dense.yml very-high-error-var.yml  low-block-var.yml)
-setting30=(  no-dense.yml very-high-error-var.yml high-block-var.yml)
+#setting01=(high-dense.yml       low-error-var.yml  low-block-var.yml grouped-form.yml)
+#setting02=(high-dense.yml       low-error-var.yml high-block-var.yml grouped-form.yml)
+#setting03=(high-dense.yml      high-error-var.yml  low-block-var.yml grouped-form.yml)
+#setting04=(high-dense.yml      high-error-var.yml high-block-var.yml grouped-form.yml)
+#setting05=(high-dense.yml very-high-error-var.yml  low-block-var.yml grouped-form.yml)
+#setting06=(high-dense.yml very-high-error-var.yml high-block-var.yml grouped-form.yml)
+#setting07=( low-dense.yml       low-error-var.yml  low-block-var.yml grouped-form.yml)
+#setting08=( low-dense.yml       low-error-var.yml high-block-var.yml grouped-form.yml)
+#setting09=( low-dense.yml      high-error-var.yml  low-block-var.yml grouped-form.yml)
+#setting10=( low-dense.yml      high-error-var.yml high-block-var.yml grouped-form.yml)
+#setting11=( low-dense.yml very-high-error-var.yml  low-block-var.yml grouped-form.yml)
+#setting12=( low-dense.yml very-high-error-var.yml high-block-var.yml grouped-form.yml)
+#setting13=(high-dense.yml       low-error-var.yml  low-block-var.yml  random-form.yml)
+#setting14=(high-dense.yml       low-error-var.yml high-block-var.yml  random-form.yml)
+#setting15=(high-dense.yml      high-error-var.yml  low-block-var.yml  random-form.yml)
+#setting16=(high-dense.yml      high-error-var.yml high-block-var.yml  random-form.yml)
+#setting17=(high-dense.yml very-high-error-var.yml  low-block-var.yml  random-form.yml)
+#setting18=(high-dense.yml very-high-error-var.yml high-block-var.yml  random-form.yml)
+#setting19=( low-dense.yml       low-error-var.yml  low-block-var.yml  random-form.yml)
+#setting20=( low-dense.yml       low-error-var.yml high-block-var.yml  random-form.yml)
+#setting21=( low-dense.yml      high-error-var.yml  low-block-var.yml  random-form.yml)
+#setting22=( low-dense.yml      high-error-var.yml high-block-var.yml  random-form.yml)
+#setting23=( low-dense.yml very-high-error-var.yml  low-block-var.yml  random-form.yml)
+#setting24=( low-dense.yml very-high-error-var.yml high-block-var.yml  random-form.yml)
+setting25=(  no-dense.yml       low-error-var.yml  low-block-var.yml grouped-form.yml)
+setting26=(  no-dense.yml       low-error-var.yml high-block-var.yml grouped-form.yml)
+setting27=(  no-dense.yml      high-error-var.yml  low-block-var.yml grouped-form.yml)
+setting28=(  no-dense.yml      high-error-var.yml high-block-var.yml grouped-form.yml)
+setting29=(  no-dense.yml very-high-error-var.yml  low-block-var.yml grouped-form.yml)
+setting30=(  no-dense.yml very-high-error-var.yml high-block-var.yml grouped-form.yml)
 
 # Run PERMANOVA
 
-# permanova () {
-#     settings=()
-#     for setting in ${@:2}; do
-#         settings+=("$settings_dir/$setting")
-#     done
-#     results_dir=$OUTPUT_DIR/permanova/$1
-#     mkdir -p $results_dir
-#     parallel --no-notice julia scripts/sim-mcmc.jl \
-#         --data simulation-study/configs/data.yml "${settings[@]}" \
-#         --permanova \
-#         --seed {} \
-#         $results_dir/rep{} ::: $(seq 1 $REPLICATES)    
-# }
+permanova () {
+    settings=()
+    for setting in ${@:2}; do
+        settings+=("$settings_dir/$setting")
+    done
+    results_dir=$OUTPUT_DIR/permanova/$1
+    mkdir -p $results_dir
+    parallel --no-notice /Applications/Julia-1.0.app/Contents/Resources/julia/bin/julia scripts/sim-mcmc.jl \
+        --data simulation-study/configs/data.yml "${settings[@]}" \
+        --permanova \
+        --seed {} \
+        $results_dir/rep{} ::: $(seq 1 $REPLICATES)    
+}
 
-# permanova setting01 "${setting01[@]}"
-# permanova setting02 "${setting02[@]}"
-# permanova setting03 "${setting03[@]}"
-# permanova setting04 "${setting04[@]}"
-# permanova setting05 "${setting05[@]}"
-# permanova setting06 "${setting06[@]}"
-# permanova setting07 "${setting07[@]}"
-# permanova setting08 "${setting08[@]}"
-# permanova setting09 "${setting09[@]}"
-# permanova setting10 "${setting10[@]}"
-# permanova setting11 "${setting11[@]}"
-# permanova setting12 "${setting12[@]}"
-# permanova setting13 "${setting13[@]}"
-# permanova setting14 "${setting14[@]}"
-# permanova setting15 "${setting15[@]}"
-# permanova setting16 "${setting16[@]}"
-# permanova setting17 "${setting17[@]}"
-# permanova setting18 "${setting18[@]}"
-# permanova setting19 "${setting19[@]}"
-# permanova setting20 "${setting20[@]}"
-# permanova setting21 "${setting21[@]}"
-# permanova setting22 "${setting22[@]}"
-# permanova setting23 "${setting23[@]}"
-# permanova setting24 "${setting24[@]}"
-# permanova setting25 "${setting25[@]}"
-# permanova setting26 "${setting26[@]}"
-# permanova setting27 "${setting27[@]}"
-# permanova setting28 "${setting28[@]}"
-# permanova setting29 "${setting29[@]}"
-# permanova setting30 "${setting30[@]}"
+permanova setting01 "${setting01[@]}"
+permanova setting02 "${setting02[@]}"
+permanova setting03 "${setting03[@]}"
+permanova setting04 "${setting04[@]}"
+permanova setting05 "${setting05[@]}"
+permanova setting06 "${setting06[@]}"
+permanova setting07 "${setting07[@]}"
+permanova setting08 "${setting08[@]}"
+permanova setting09 "${setting09[@]}"
+permanova setting10 "${setting10[@]}"
+permanova setting11 "${setting11[@]}"
+permanova setting12 "${setting12[@]}"
+permanova setting13 "${setting13[@]}"
+permanova setting14 "${setting14[@]}"
+permanova setting15 "${setting15[@]}"
+permanova setting16 "${setting16[@]}"
+permanova setting17 "${setting17[@]}"
+permanova setting18 "${setting18[@]}"
+permanova setting19 "${setting19[@]}"
+permanova setting20 "${setting20[@]}"
+permanova setting21 "${setting21[@]}"
+permanova setting22 "${setting22[@]}"
+permanova setting23 "${setting23[@]}"
+permanova setting24 "${setting24[@]}"
+permanova setting25 "${setting25[@]}"
+permanova setting26 "${setting26[@]}"
+permanova setting27 "${setting27[@]}"
+permanova setting28 "${setting28[@]}"
+permanova setting29 "${setting29[@]}"
+permanova setting30 "${setting30[@]}"
 
 # Run MIMIX models
 
