@@ -11,13 +11,9 @@ For more information, read the paper: [MIMIX: a Bayesian Mixed-Effects Model for
 
 ## Installation
 
-MIMIX requires Julia 0.6, which can be downloaded from [https://julialang.org/downloads/oldreleases.html](https://julialang.org/downloads/oldreleases.html). Platform specific installation instuctions are available at [https://julialang.org/downloads/platform.html](https://julialang.org/downloads/platform.html).
+MIMIX requires Julia 1.0, which can be downloaded from [https://julialang.org/downloads/](https://julialang.org/downloads/). Platform specific installation instuctions are available at [https://julialang.org/downloads/platform.html](https://julialang.org/downloads/platform.html).
 
 After Julia is successfully installed, clone this repository and symlink it to Julia's package directory.
-
-```bash
-ln -s /path/to/mimix ~/.julia/v0.6/MicrobiomeMixedModels.jl
-```
 
 The following Julia packages are required:
 - StatsBase
@@ -61,7 +57,7 @@ julia scripts/sim-mcmc.jl \
 
 ## Data analysis
 
-Run `./nutnet-analysis/run-nutnet-analysis.sh -d nutnet-analysis/full-data -o nutnet-analysis -f 500 -i 20000 -b 10000 -t 1 -c 1` to reproduce the full NutNet data analysis. To demo the analysis on a dataset of reduced dimensionality, replace `nutnet-analysis/full-data` with `nutnet-analysis/reduced-data` and reduce the number of factors to `-f 100` or fewer.
+Run `./nutnet-analysis/run-nutnet-analysis.sh -d nutnet-analysis/full-data -o nutnet-analysis -f 166 -i 20000 -b 10000 -t 20 -c 1` to reproduce the full NutNet data analysis. To demo the analysis on a dataset of reduced dimensionality, replace `nutnet-analysis/full-data` with `nutnet-analysis/reduced-data` and reduce the number of factors to `-f 100` or fewer.
 
 This depends primarily on `scripts/fit-mcmc.jl` which allows the user to fit a model with their own configurations. Example configurations can be found in `nutnet-analysis/configs`. A call to this script may look like the following:
 
