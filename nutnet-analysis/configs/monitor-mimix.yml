@@ -1,0 +1,28 @@
+
+Y: false
+phi: false
+theta: true
+theta_mean: false
+theta_var: true
+mu: false
+mu_var: false
+gamma: false
+gamma_var: false
+beta: true
+beta_var: false
+beta_full: false
+omega: true
+pi: false
+
+Lambda: true
+lambda_var: false
+psi: false
+xi: false
+tau: false
+nu: false
+a: false
+g: false
+g_var: true
+b: false
+b_full: false
+b_var: true

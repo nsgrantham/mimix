@@ -1,0 +1,13 @@
+# Hamiltonian Monte Carlo settings
+hmc_epsilon: 0.13
+hmc_steps: 32
+hmc_verbose: false
+
+# Define support of 'a' within \xi ~ Dirichlet(a)
+a_start: 0.01
+a_by: 0.01
+a_end: 0.5
+
+# Hyperparams of nu
+c0: 1
+d0: 1
