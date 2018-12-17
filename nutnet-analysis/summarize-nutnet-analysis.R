@@ -36,6 +36,7 @@ if (file.exists(file.path(args$data, "tax.csv"))) {
 plot_post_pred_check <- function(obs, preds, group, xlab="", ylab="") {
   post_pred_bounds <- t(apply(preds, 1, function(x) quantile(x, c(0.025, 0.975))))
   obs_in_bounds <- (post_pred_bounds[, 1] < obs) & (obs < post_pred_bounds[, 2])
+  print(paste("Proportion of observations within 95% credible intervals:", mean(obs_in_bounds)))
   df <- cbind.data.frame(
     x = 1:table(group)[1],
     y = unname(obs),
@@ -103,18 +104,8 @@ for (post_pred_check in post_pred_checks) {
   p <- plot_post_pred_check(c(obs_max_count), 
                        rbind(post_pred_max_count), 
                        group = c(rep("Max count", length(obs_max_count))),
-                       xlab="Sample IDs", ylab="Number of reads")#, 
+                       xlab="Sample IDs", ylab="Proportion of reads in sample to most abundant OTU")#, 
   ggsave(file.path(post_pred_output_dir, "post-pred-max-count.png"), plot = p, width = 7.5, height = 4)
-
-  obs_order <- order(obs_mean_count)
-  obs_mean_count <- obs_mean_count[obs_order, ]
-  print(length(obs_mean_count))
-  post_pred_mean_count <- post_pred_mean_count[obs_order, ]
-  p <- plot_post_pred_check(c(obs_mean_count[1:160]), 
-                       rbind(post_pred_mean_count[1:160, ]), 
-                       group = c(rep("Mean count", length(obs_mean_count[1:160]))),
-                       xlab="Sample IDs", ylab="Number of reads")#, 
-  ggsave(file.path(post_pred_output_dir, "post-pred-mean-count.png"), plot = p, width = 7.5, height = 4)
 
   obs_order <- order(obs_shannon_div)
   obs_shannon_div <- obs_shannon_div[obs_order, ]
@@ -133,15 +124,11 @@ for (post_pred_check in post_pred_checks) {
   obs_order <- order(obs_braycurtis_div)
   obs_braycurtis_div <- obs_braycurtis_div[obs_order, ]
   post_pred_braycurtis_div <- post_pred_braycurtis_div[obs_order, ]
-  obs_order <- order(obs_jaccard_div)
-  obs_jaccard_div <- obs_jaccard_div[obs_order, ]
-  post_pred_jaccard_div <- post_pred_jaccard_div[obs_order, ]
-  p <- plot_post_pred_check(c(obs_braycurtis_div, obs_jaccard_div), 
-                       rbind(post_pred_braycurtis_div, post_pred_jaccard_div), 
-                       group = c(rep("Bray-Curtis diversity", length(obs_braycurtis_div)),
-                                 rep("Jaccard diversity", length(obs_jaccard_div))),
+  p <- plot_post_pred_check(c(obs_braycurtis_div), 
+                       rbind(post_pred_braycurtis_div), 
+                       group = c(rep("Bray-Curtis diversity", length(obs_braycurtis_div))),
                        xlab="Group IDs", ylab="Average similarity") 
-  ggsave(file.path(post_pred_output_dir, "post-pred-beta-div.png"), plot = p, width = 7.5, height = 4)
+  ggsave(file.path(post_pred_output_dir, "post-pred-beta-div.png"), plot = p, width = 4.5, height = 4)
 }
 
 ## Global variable selection results
@@ -238,6 +225,8 @@ if (file.exists(g_var_path) & file.exists(theta_var_path)) {
   g_var_hat <- colMeans(g_var)
   print(paste("g_var_hat:", g_var_hat, collapse = ", "))
   theta_var_hat <- colMeans(theta_var)
+  print("Summary of theta_var_hat")
+  summary(theta_var_hat)
   LLt_factor_var <- diag(LambdatLambda) * (1 + sum(g_var_hat))
   eta <- LLt_factor_var / (LLt_factor_var + theta_var_hat)
   print(paste("Proportion of OTUs for which more than half of variance is explained by factors:", mean(eta > 0.5)))
