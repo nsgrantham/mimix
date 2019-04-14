@@ -11,67 +11,86 @@ For more information, read the paper: [MIMIX: a Bayesian Mixed-Effects Model for
 
 ## Installation
 
+### Install Julia
+
 MIMIX requires Julia 1.0, which can be downloaded from [https://julialang.org/downloads/](https://julialang.org/downloads/). Platform specific installation instuctions are available at [https://julialang.org/downloads/platform.html](https://julialang.org/downloads/platform.html).
 
-After Julia is successfully installed, clone this repository and symlink it to Julia's package directory.
+Add the `julia` command to your path. One way to achieve this on macOS is to symlink the command to `/usr/local/bin/`:
 
-The following Julia packages are required:
-- StatsBase
-- DataFrames
-- Distributions
-- Mamba
-- YAML
-- RCall
-- CSV
-- ArgParse
+```
+ln -s /Applications/Julia-1.0.app/Contents/Resources/julia/bin/julia /usr/local/bin/julia
+```
 
-To install each Julia package, run `Pkg.add("PackageName")` within an active Julia session.
+### Install MicrobiomeMixedModels.jl
 
-The analyses in the paper also require R (3.4 or greater) and several R packages:
-- tidyverse
-- vegan
-- argparse
-- xtable
-- reshape2
+```
+git clone https://github.com/nsgrantham/mimix
+cd mimix
+```
 
-To install each R package, run `install.packages("PackageName")` within an active R session.
+Open Julia with `julia` and run the following commands:
 
-Finally, the simulation study requires the GNU tool `parallel` (read more at [https://www.gnu.org/software/parallel/](https://www.gnu.org/software/parallel/)) which can be installed with `brew install parallel` on macOS and `sudo apt-get install parallel` on Ubuntu.
+```
+] develop MicrobiomeMixedModels.jl
+] add StatsBase DataFrames Distributions Mamba YAML RCall CSV ArgParse
+```
+
+
+### Install R
+
+MIMIX requires R 3.4 or greater to reproduce the tables and graphics from the paper and to compare the performance of MIMIX and its variants with PERMANOVA, implemented by `vegan::adonis()`.
+
+Download and install R from [https://www.r-project.org/](https://www.r-project.org/).
+
+Once installed, open R from the terminal with `R` and run the following command:
+
+```
+install.packages(c("tidyverse", "vegan", "argparse", "xtable", "reshape2"))
+```
+
+### Install parallel
+
+To reproduce the simulation study, you will need to install the GNU tool `parallel` (read more at [https://www.gnu.org/software/parallel/](https://www.gnu.org/software/parallel/)).
+
+To do so, run `brew install parallel` on macOS or `sudo apt-get install parallel` on Ubuntu.
+
 
 ## Simulation study
 
 Run `./simulation-study/run-simulation-study.sh -r 50 -o simulation-study/results` to reproduce the simulation study.
 
-This depends primarily on `scripts/sim-mcmc.jl` which allows the user to simulate a model with their own configurations. Example configurations can be found in `simulation-study/configs`. A call to this script may look like the following:
+This depends primarily on `scripts/sim-mcmc.jl` which allows the user to simulate a model with their own configurations. A call to this script may look like the following:
 
 ```
+mkdir simulation-results
 julia scripts/sim-mcmc.jl \
-    --data path/to/data.yml \
-    --hyper path/to/hyper.yml \
-    --monitor path/to/monitor.yml \
-    --inits path/to/inits.yml \
+    --data simulation-study/configs/data.yml \
+    --hyper simulation-study/configs/hyper.yml \
+    --monitor simulation-study/configs/monitor.yml \
+    --inits simulation-study/configs/inits.yml \
     --seed 123 \
     --factors 20 \
-    path/to/output_dir
+    simulation-results
 ```
 
 ## Data analysis
 
-Run `./nutnet-analysis/run-nutnet-analysis.sh -d nutnet-analysis/full-data -o nutnet-analysis -f 166 -i 20000 -b 10000 -t 20 -c 1` to reproduce the full NutNet data analysis. To demo the analysis on a dataset of reduced dimensionality, replace `nutnet-analysis/full-data` with `nutnet-analysis/reduced-data` and reduce the number of factors to `-f 100` or fewer.
+Run `./nutnet-analysis/run-nutnet-analysis.sh -d nutnet-analysis/full-data -o nutnet-analysis -f 166 -i 20000 -b 10000 -t 20 -c 1` to reproduce the full NutNet data analysis. To demo the analysis on a dataset of reduced dimensionality, replace `nutnet-analysis/full-data` with `nutnet-analysis/reduced-data` and reduce the number of factors (`-f`) to 100 or fewer.
 
-This depends primarily on `scripts/fit-mcmc.jl` which allows the user to fit a model with their own configurations. Example configurations can be found in `nutnet-analysis/configs`. A call to this script may look like the following:
+This depends primarily on `scripts/fit-mcmc.jl` which allows the user to fit a model with their own configurations. A call to this script may look like the following:
 
 ```
+mkdir nutnet-analysis-results
 julia scripts/fit-mcmc.jl \
-    --hyper path/to/hyper.yml \
-    --monitor path/to/monitor.yml \
-    --inits path/to/inits.yml \
+    --hyper nutnet-analysis/configs/hyper.yml \
+    --monitor nutnet-analysis/configs/monitor-mimix.yml \
+    --inits nutnet-analysis/configs/inits.yml \
     --factors 20 \
-    path/to/data_dir \
-    path/to/output_dir
+    nutnet-analysis/reduced-data \  # or nutnet-analysis/full-data
+    nutnet-analysis-results
 ```
 
 The data directory must contain three files:
-- `X.csv`: treatment covariates in samples (rows) by covariates (columns)
-- `Y.csv`: microbiome abundance data in samples (rows) by taxa (columns)
-- `Z.csv`: block identifiers in samples (rows) by number of blocking factors (columns)
+- `X.csv`: treatment covariates in `n` samples (rows) by `p` covariates (columns)
+- `Y.csv`: microbiome abundance data in `n` samples (rows) by `K` taxa (columns)
+- `Z.csv`: block identifiers in `n` samples (rows) by `q` blocking factors (columns)

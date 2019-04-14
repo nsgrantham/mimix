@@ -6,3 +6,7 @@ m_min: 2500
 m_max: 5000
 block_cor: 0.9
 error_cor: 0.9
+dense: 0.1
+form: grouped
+block_var: 1.0
+error_var: 1.0

@@ -54,7 +54,7 @@ permanova () {
     done
     results_dir=$OUTPUT_DIR/permanova/$1
     mkdir -p $results_dir
-    parallel --no-notice /Applications/Julia-1.0.app/Contents/Resources/julia/bin/julia scripts/sim-mcmc.jl \
+    parallel --no-notice julia scripts/sim-mcmc.jl \
         --data simulation-study/configs/data.yml "${settings[@]}" \
         --permanova \
         --seed {} \
@@ -101,7 +101,7 @@ mimix () {
     done
     results_dir=$OUTPUT_DIR/mimix-$1-factors-$2-priors/$3
     mkdir -p $results_dir
-    parallel --no-notice /Applications/Julia-1.0.app/Contents/Resources/julia/bin/julia scripts/sim-mcmc.jl \
+    parallel --no-notice julia scripts/sim-mcmc.jl \
         --inits   simulation-study/configs/inits.yml \
         --data    simulation-study/configs/data.yml "${settings[@]}" \
         --hyper   simulation-study/configs/hyper.yml \
