@@ -49,7 +49,7 @@ julia scripts/fit-mcmc.jl \
    --burnin $MCMC_BURNIN \
    --thin $MCMC_THIN \
    --chains $MCMC_CHAINS \
-   --loadings 'G' \
+   --loadings G \
    --post-pred-check \
    "$DATA_DIR" \
    "$OUTPUT_DIR"/mimix-gaussian
@@ -67,7 +67,7 @@ julia scripts/fit-mcmc.jl \
    --burnin $MCMC_BURNIN \
    --thin $MCMC_THIN \
    --chains $MCMC_CHAINS \
-   --loadings 'DL' \
+   --loadings DL \
    "$DATA_DIR" \
    "$OUTPUT_DIR"/mimix
 

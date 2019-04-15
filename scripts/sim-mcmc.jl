@@ -1,5 +1,3 @@
-push!(LOAD_PATH, "/Users/neal/Projects/mimix/src")
-
 using ArgParse
 using CSV
 using DataFrames

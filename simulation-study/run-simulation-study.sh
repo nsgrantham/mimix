@@ -14,30 +14,30 @@ done
 # Define simulation study settings
 
 settings_dir=simulation-study/configs
-#setting01=(high-dense.yml       low-error-var.yml  low-block-var.yml grouped-form.yml)
-#setting02=(high-dense.yml       low-error-var.yml high-block-var.yml grouped-form.yml)
-#setting03=(high-dense.yml      high-error-var.yml  low-block-var.yml grouped-form.yml)
-#setting04=(high-dense.yml      high-error-var.yml high-block-var.yml grouped-form.yml)
-#setting05=(high-dense.yml very-high-error-var.yml  low-block-var.yml grouped-form.yml)
-#setting06=(high-dense.yml very-high-error-var.yml high-block-var.yml grouped-form.yml)
-#setting07=( low-dense.yml       low-error-var.yml  low-block-var.yml grouped-form.yml)
-#setting08=( low-dense.yml       low-error-var.yml high-block-var.yml grouped-form.yml)
-#setting09=( low-dense.yml      high-error-var.yml  low-block-var.yml grouped-form.yml)
-#setting10=( low-dense.yml      high-error-var.yml high-block-var.yml grouped-form.yml)
-#setting11=( low-dense.yml very-high-error-var.yml  low-block-var.yml grouped-form.yml)
-#setting12=( low-dense.yml very-high-error-var.yml high-block-var.yml grouped-form.yml)
-#setting13=(high-dense.yml       low-error-var.yml  low-block-var.yml  random-form.yml)
-#setting14=(high-dense.yml       low-error-var.yml high-block-var.yml  random-form.yml)
-#setting15=(high-dense.yml      high-error-var.yml  low-block-var.yml  random-form.yml)
-#setting16=(high-dense.yml      high-error-var.yml high-block-var.yml  random-form.yml)
-#setting17=(high-dense.yml very-high-error-var.yml  low-block-var.yml  random-form.yml)
-#setting18=(high-dense.yml very-high-error-var.yml high-block-var.yml  random-form.yml)
-#setting19=( low-dense.yml       low-error-var.yml  low-block-var.yml  random-form.yml)
-#setting20=( low-dense.yml       low-error-var.yml high-block-var.yml  random-form.yml)
-#setting21=( low-dense.yml      high-error-var.yml  low-block-var.yml  random-form.yml)
-#setting22=( low-dense.yml      high-error-var.yml high-block-var.yml  random-form.yml)
-#setting23=( low-dense.yml very-high-error-var.yml  low-block-var.yml  random-form.yml)
-#setting24=( low-dense.yml very-high-error-var.yml high-block-var.yml  random-form.yml)
+setting01=(high-dense.yml       low-error-var.yml  low-block-var.yml grouped-form.yml)
+setting02=(high-dense.yml       low-error-var.yml high-block-var.yml grouped-form.yml)
+setting03=(high-dense.yml      high-error-var.yml  low-block-var.yml grouped-form.yml)
+setting04=(high-dense.yml      high-error-var.yml high-block-var.yml grouped-form.yml)
+setting05=(high-dense.yml very-high-error-var.yml  low-block-var.yml grouped-form.yml)
+setting06=(high-dense.yml very-high-error-var.yml high-block-var.yml grouped-form.yml)
+setting07=( low-dense.yml       low-error-var.yml  low-block-var.yml grouped-form.yml)
+setting08=( low-dense.yml       low-error-var.yml high-block-var.yml grouped-form.yml)
+setting09=( low-dense.yml      high-error-var.yml  low-block-var.yml grouped-form.yml)
+setting10=( low-dense.yml      high-error-var.yml high-block-var.yml grouped-form.yml)
+setting11=( low-dense.yml very-high-error-var.yml  low-block-var.yml grouped-form.yml)
+setting12=( low-dense.yml very-high-error-var.yml high-block-var.yml grouped-form.yml)
+setting13=(high-dense.yml       low-error-var.yml  low-block-var.yml  random-form.yml)
+setting14=(high-dense.yml       low-error-var.yml high-block-var.yml  random-form.yml)
+setting15=(high-dense.yml      high-error-var.yml  low-block-var.yml  random-form.yml)
+setting16=(high-dense.yml      high-error-var.yml high-block-var.yml  random-form.yml)
+setting17=(high-dense.yml very-high-error-var.yml  low-block-var.yml  random-form.yml)
+setting18=(high-dense.yml very-high-error-var.yml high-block-var.yml  random-form.yml)
+setting19=( low-dense.yml       low-error-var.yml  low-block-var.yml  random-form.yml)
+setting20=( low-dense.yml       low-error-var.yml high-block-var.yml  random-form.yml)
+setting21=( low-dense.yml      high-error-var.yml  low-block-var.yml  random-form.yml)
+setting22=( low-dense.yml      high-error-var.yml high-block-var.yml  random-form.yml)
+setting23=( low-dense.yml very-high-error-var.yml  low-block-var.yml  random-form.yml)
+setting24=( low-dense.yml very-high-error-var.yml high-block-var.yml  random-form.yml)
 setting25=(  no-dense.yml       low-error-var.yml  low-block-var.yml grouped-form.yml)
 setting26=(  no-dense.yml       low-error-var.yml high-block-var.yml grouped-form.yml)
 setting27=(  no-dense.yml      high-error-var.yml  low-block-var.yml grouped-form.yml)
@@ -54,7 +54,7 @@ permanova () {
     done
     results_dir=$OUTPUT_DIR/permanova/$1
     mkdir -p $results_dir
-    parallel --no-notice /Applications/Julia-1.0.app/Contents/Resources/julia/bin/julia scripts/sim-mcmc.jl \
+    parallel --no-notice julia scripts/sim-mcmc.jl \
         --data simulation-study/configs/data.yml "${settings[@]}" \
         --permanova \
         --seed {} \
@@ -101,7 +101,7 @@ mimix () {
     done
     results_dir=$OUTPUT_DIR/mimix-$1-factors-$2-priors/$3
     mkdir -p $results_dir
-    parallel --no-notice /Applications/Julia-1.0.app/Contents/Resources/julia/bin/julia scripts/sim-mcmc.jl \
+    parallel --no-notice julia scripts/sim-mcmc.jl \
         --inits   simulation-study/configs/inits.yml \
         --data    simulation-study/configs/data.yml "${settings[@]}" \
         --hyper   simulation-study/configs/hyper.yml \

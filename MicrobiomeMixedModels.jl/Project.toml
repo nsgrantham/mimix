@@ -1,0 +1,16 @@
+name = "MicrobiomeMixedModels"
+uuid = "0930ccc7-16db-55b2-bbc5-5e6d0ae52009"
+license = "MIT"
+desc = "Fit MIMIX (MIcrobiome MIXed model) to microbiome data from designed experiments."
+version = "1.0.0"
+
+[deps]
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
+Mamba = "5424a776-8be3-5c5b-a13f-3551f69ba0e6"
+RCall = "6f49c342-dc21-5d91-9882-a32aef131414"
+YAML = "ddb6d928-2868-570f-bddf-ab3f9cf99eb6"
+ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
+

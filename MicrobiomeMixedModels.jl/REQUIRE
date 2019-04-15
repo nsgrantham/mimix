@@ -1,0 +1,10 @@
+julia 1.0
+LinearAlgebra
+StatsBase
+DataFrames
+Distributions
+Mamba
+RCall
+YAML
+ArgParse
+
