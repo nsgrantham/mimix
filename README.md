@@ -28,11 +28,11 @@ git clone https://github.com/nsgrantham/mimix
 cd mimix
 ```
 
-Open Julia with `julia` and run the following commands:
+Open Julia with `julia`, type `]` to enter Pkg mode, and then run the following commands:
 
 ```
-] develop MicrobiomeMixedModels.jl
-] add StatsBase DataFrames Distributions Mamba YAML RCall CSV ArgParse
+develop MicrobiomeMixedModels.jl
+add StatsBase DataFrames Distributions Mamba YAML RCall CSV ArgParse
 ```
 
 
