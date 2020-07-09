@@ -7,7 +7,7 @@ using YAML
 using RCall
 
 using StatsBase: Histogram, Weights, sample
-using DataFrames: DataFrame, names!
+using DataFrames: DataFrame, rename!, names!
 
 import Base: convert, maximum
 import Distributions: params, partype, mean, var, mode, pdf, logpdf, rand

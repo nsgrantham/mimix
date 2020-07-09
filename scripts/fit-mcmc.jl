@@ -11,7 +11,7 @@ using YAML
 
 function parse_commandline()
     s = ArgParseSettings("Fit a model to real-world data.")
-    @add_arg_table s begin
+    @add_arg_table! s begin
         "input"
             help = "Directory from which to read X.csv, Y.csv, and Z.csv."
         "output"
@@ -64,11 +64,11 @@ end
 
 function read_data(dir; L=0)
     println("Reading X.csv")
-    X = convert(Matrix{Int}, CSV.read(joinpath(dir, "X.csv"), datarow=1))
+    X = convert(Matrix{Int}, DataFrame!(CSV.File(joinpath(dir, "X.csv"), datarow=1)))
     println("Reading Y.csv")
-    Y = convert(Matrix{Int}, CSV.read(joinpath(dir, "Y.csv"), datarow=1))
+    Y = convert(Matrix{Int}, DataFrame!(CSV.File(joinpath(dir, "Y.csv"), datarow=1)))
     println("Reading Z.csv")
-    Z = convert(Matrix{Int}, CSV.read(joinpath(dir, "Z.csv"), datarow=1))
+    Z = convert(Matrix{Int}, DataFrame!(CSV.File(joinpath(dir, "Z.csv"), datarow=1)))
     N, K = size(Y)
     m = sum(Y, dims=2)
     q = maximum(vec(Z))
@@ -100,7 +100,6 @@ input = abspath(args["input"])
 @assert isdir(input)
 
 output = abspath(args["output"])
-
 Random.seed!(args["seed"])
 
 if args["permanova"]

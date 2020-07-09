@@ -46,6 +46,7 @@ function get_post(sim, data, param)
     K = data[:K]
     L = data[:L]
     p = data[:p]
+    q = data[:q]
     num_blocking_factors = data[:num_blocking_factors]
     param_names = Dict{Symbol, Any}(
         :Y => ["Y[$i, $k]" for i in 1:N, k in 1:K],
@@ -79,7 +80,7 @@ function get_post(sim, data, param)
     names = param_names[param]
     post = vcat([sim[:, vec(names), c].value for c in 1:chains]...)
     post = DataFrame(dropdims(post, dims=3))
-    names!(post, [Symbol(name) for name in vec(names)])
+    rename!(post, [Symbol(name) for name in vec(names)])
     return post
 end
 

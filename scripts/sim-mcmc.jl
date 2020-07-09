@@ -8,7 +8,7 @@ using YAML
 
 function parse_commandline()
     s = ArgParseSettings("Fit a model to artificially-generated data.")
-    @add_arg_table s begin
+    @add_arg_table! s begin
         "output"
             help = "File to which simulation results are written."
         "--iters", "-i"
@@ -80,7 +80,7 @@ function generate_data(;
     @assert N % q == 0
 
     Random.seed!(seed)
-
+    
     # Fixed effects due to single treatment
     X = transpose([ones(div(N, 2))... zeros(div(N, 2))...])
     β = zeros(K)
@@ -114,14 +114,14 @@ function generate_data(;
     for i in 1:N
         θ[i, :] = rand(MvNormal(μ + β * X[i] + γ[:, Z[i]], Σ))
     end
-
+    
     # Multivariate count data
     e = exp.(θ)
     ϕ = e ./ sum(e, dims=2)
     m = sample(m_min:m_max, N)
     Y = zeros(Int, (N, K))
     for i in 1:N
-        Y[i, :] = rand(Multinomial(m[i], ϕ[i, :]))
+        Y[i, :] = rand(Distributions.Multinomial(m[i], ϕ[i, :]))
     end
 
 
@@ -238,7 +238,7 @@ else  # mimix
     results = DataFrame(mamba_name = sim_beta_names)
     nodes = Symbol[]
     vals = Float64[]
-    for name in results[:mamba_name]
+    for name in results[!, :mamba_name]
         for (node, value) in truth
             if startswith(name, String(node))
                 push!(nodes, node)
@@ -253,14 +253,14 @@ else  # mimix
             end
         end
     end
-    results[:mamba_node] = nodes
-    results[:value] = vals
+    results[!, :mamba_node] = nodes
+    results[!, :value] = vals
 
     post_summary = summarystats(sim_beta)
     post_quantiles = quantile(sim_beta)
-    results[:mean] = post_summary.value[:, 1]
+    results[!, :mean] = post_summary.value[:, 1]
     for (i, q) in enumerate(post_quantiles.colnames)
-        results[Symbol(q)] = post_quantiles.value[:, i]
+        results[!, Symbol(q)] = post_quantiles.value[:, i]
     end
 
     local_estimates_path = joinpath(output, "local-estimates.tsv")
